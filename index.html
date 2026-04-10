@@ -168,6 +168,26 @@
                 display: none !important;
             }
         }
+
+        .question-card.answered {
+            background-color: #f8f9fa; /* 옅은 회색 배경 */
+            border-left-color: #adb5bd; /* 왼쪽 테두리도 회색으로 */
+            opacity: 0.7; /* 전체적으로 살짝 흐리게 */
+        }
+        .question-card.answered h3, 
+        .question-card.answered .content {
+            color: #6c757d; /* 글자색도 옅은 회색으로 */
+            text-decoration: line-through; /* (선택사항) 글자에 취소선 긋기 */
+        }
+        .chk-label {
+            font-size: 13px;
+            font-weight: normal;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #444;
+        }
 </style>
 </head>
 <body>
@@ -308,14 +328,43 @@
             return;
         }
 
-        // 최신 순으로 역순 출력 (답변 관련 코드는 모두 삭제되었습니다)
+        // 최신 순으로 역순 출력
         [...filtered].reverse().forEach((q) => {
             const card = document.createElement('div');
             card.className = 'question-card';
+            
+            // 날짜의 숫자만 뽑아서 고유 ID 만들기 (예: chk_2026410183025)
+            const uniqueId = 'chk_' + q.date.replace(/[^0-9]/g, ''); 
+            
+            // 내 컴퓨터(브라우저)가 이 질문을 체크했었다고 기억하고 있는지 확인
+            const isChecked = localStorage.getItem(uniqueId) === "true";
+            if (isChecked) {
+                card.classList.add('answered'); // 기억하고 있다면 회색으로 칠하기
+            }
+
+            // 양쪽 끝으로 배치하기 위해 제목 부분에 flex 스타일 적용
             card.innerHTML = `
-                <h3>📝 ${q.date}</h3>
-                <p class="content">${escapeHtml(q.content)}</p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <h3 style="margin: 0;">📝 ${q.date}</h3>
+                    <label class="chk-label" for="${uniqueId}">
+                        <input type="checkbox" id="${uniqueId}" ${isChecked ? 'checked' : ''}> 답변 완료
+                    </label>
+                </div>
+                <p class="content" style="margin: 0;">${escapeHtml(q.content)}</p>
             `;
+
+            // 체크박스를 누를 때마다 색상을 바꾸고 브라우저에 기억시키기
+            const checkbox = card.querySelector(`#${uniqueId}`);
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    card.classList.add('answered');
+                    localStorage.setItem(uniqueId, "true"); // 체크했다고 메모
+                } else {
+                    card.classList.remove('answered');
+                    localStorage.removeItem(uniqueId); // 메모 지우기
+                }
+            });
+
             questionList.append(card);
         });
     }
