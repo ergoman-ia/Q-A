@@ -186,11 +186,13 @@
     <!-- ===== 관리자 모드 ===== -->
     <div id="adminMode">
         <p class="desc" style="color:#d9534f; font-weight:bold;">[관리자 전용] 접수된 의견 목록</p>
-        <button id="goToUserBtn" class="admin-btn" style="margin-bottom:15px;">질문 작성 화면으로 돌아가기</button>
         
-        <div style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px;">
-            <label for="dateFilter" style="display:inline; margin-right:10px; font-weight:bold;">📅 날짜 검색:</label>
+        <button id="goToUserBtn" class="admin-btn" style="background-color:#dc3545; margin-bottom:15px;">🔒 로그아웃 (사용자 모드로)</button>
+        
+        <div style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
+            <label for="dateFilter" style="font-weight:bold; margin:0;">📅 날짜 검색:</label>
             <input type="date" id="dateFilter" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+            <button id="refreshDataBtn" style="width: auto; padding: 5px 10px; font-size: 13px; background-color: #17a2b8;">🔄 최신화</button>
         </div>
         
         <div id="questionList"></div>
@@ -337,6 +339,11 @@
     goToUserBtn.addEventListener('click', function() {
         adminMode.style.display = 'none';
         userMode.style.display  = 'block';
+        
+        // ✅ 로그아웃 시 기존에 보던 날짜와 데이터 목록을 깨끗하게 지웁니다!
+        document.getElementById('dateFilter').value = ''; 
+        questionList.innerHTML = '';
+        allQuestions = [];
     });
     
 </script>
