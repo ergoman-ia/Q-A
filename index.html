@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>근골격계부담작업 유해요인조사 질의응답</title>
+    <title>근골격계부담작업 유해요인조사 Q&A</title>
     <style>
-        /* [기존 CSS 코드 완벽 유지] */
         body {
             font-family: 'Malgun Gothic', sans-serif;
             background-color: #f0f4f8;
@@ -26,7 +25,7 @@
         }
         h1 {
             color: #0056b3;
-            font-size: 24px;
+            font-size: 22px;
             text-align: center;
             margin-bottom: 10px;
         }
@@ -45,18 +44,17 @@
             margin-bottom: 5px;
             color: #444;
         }
-        input[type="text"], textarea {
+        textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
             font-family: inherit;
-        }
-        textarea {
             resize: vertical;
             min-height: 150px;
-            line-height: 1.5;
+            line-height: 1.6;
+            font-size: 15px;
         }
         button {
             width: 100%;
@@ -70,135 +68,275 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #218838;
+        button:hover { background-color: #218838; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
+
+        .admin-btn {
+            background-color: #6c757d;
+            margin-top: 12px;
         }
-        #questionList {
-            margin-top: 30px;
-        }
+        .admin-btn:hover { background-color: #5a6268; }
+
+        #adminMode { display: none; }
+
+        /* 질문 카드 */
         .question-card {
             background-color: #e9ecef;
             padding: 15px;
             border-radius: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border-left: 5px solid #0056b3;
         }
         .question-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
+            margin: 0 0 8px 0;
+            font-size: 14px;
             color: #0056b3;
         }
-        .question-card p {
-            margin: 0;
+        .question-card .content {
+            margin: 0 0 10px 0;
             white-space: pre-wrap;
             font-size: 14px;
+            line-height: 1.6;
         }
-        
-        /* [추가된 CSS] 모드 전환 버튼 및 화면 숨김 처리용 */
-        .admin-btn {
-            background-color: #6c757d; /* 눈에 덜 띄는 회색으로 처리 */
-            margin-top: 20px;
+
+        /* 답변 영역 */
+        .answer-box {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
+            color: #155724;
+            white-space: pre-wrap;
+            line-height: 1.6;
         }
-        .admin-btn:hover {
-            background-color: #5a6268;
+        .no-answer {
+            color: #999;
+            font-size: 13px;
+            font-style: italic;
         }
-        #adminMode {
-            display: none; /* 초기에는 관리자 모드 숨김 */
+
+        /* 관리자 답변 입력 폼 */
+        .answer-form {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
         }
+        .answer-form textarea {
+            min-height: 60px;
+            font-size: 13px;
+            flex: 1;
+        }
+        .answer-submit-btn {
+            width: auto;
+            padding: 8px 14px;
+            font-size: 13px;
+            background-color: #0056b3;
+            flex-shrink: 0;
+            align-self: flex-end;
+        }
+        .answer-submit-btn:hover { background-color: #004494; }
+
+        /* 로딩 스피너 */
+        .loading {
+            text-align: center;
+            color: #888;
+            padding: 30px 0;
+            font-size: 14px;
+        }
+
+        /* 상태 메시지 */
+        .status-msg {
+            text-align: center;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 18px;
+        }
+        .status-msg.success { color: #28a745; }
+        .status-msg.error   { color: #dc3545; }
+
+        /* 새로고침 버튼 */
+        .refresh-btn {
+            background-color: #17a2b8;
+            margin-bottom: 16px;
+        }
+        .refresh-btn:hover { background-color: #138496; }
     </style>
 </head>
 <body>
+<div class="container">
+    <h1>근골격계부담작업 유해요인조사 Q&A</h1>
 
-    <div class="container">
-        <h1>근골격계부담작업 유해요인조사 Q&A</h1>
-        
-        <div id="userMode">
-            <p class="desc">현장의 유해 요인이나 작업 불편 사항에 대해 상세히 적어주세요. 장문 입력이 가능합니다. (본 조사는 완전 익명으로 진행됩니다.)</p>
+    <!-- ===== 사용자 모드 ===== -->
+    <div id="userMode">
+        <p class="desc">현장의 유해 요인이나 작업 불편 사항을 자유롭게 적어주세요.<br>본 조사는 <strong>완전 익명</strong>으로 진행됩니다.</p>
 
-            <form id="qaForm">
-                <div class="form-group">
-                    <label for="questionContent">질문 및 건의사항 상세내용</label>
-                    <textarea id="questionContent" placeholder="작업 중 느끼는 신체적 부담(목, 어깨, 허리 등)이나 개선이 필요한 사항을 자유롭게 적어주세요." required></textarea>
-                </div>
-                <button type="submit">질문 등록하기</button>
-            </form>
-            
-            <button id="goToAdminBtn" class="admin-btn">관리자 모드 접속</button>
-        </div>
+        <form id="qaForm">
+            <div class="form-group">
+                <label for="questionContent">질문 및 건의사항</label>
+                <textarea id="questionContent" placeholder="작업 중 느끼는 신체적 부담(목, 어깨, 허리 등)이나 개선이 필요한 사항을 자유롭게 적어주세요." required></textarea>
+            </div>
+            <button type="submit" id="submitBtn">질문 등록하기</button>
+            <div class="status-msg" id="submitStatus"></div>
+        </form>
 
-        <div id="adminMode">
-            <p class="desc" style="color: #d9534f; font-weight: bold;">[관리자 전용] 접수된 의견 목록</p>
-            <button id="goToUserBtn" class="admin-btn" style="margin-bottom: 20px;">질문 작성 화면으로 돌아가기</button>
-            
-            <div id="questionList">
-                </div>
-        </div>
+        <button id="goToAdminBtn" class="admin-btn">관리자 모드 접속</button>
     </div>
 
-    <script>
-        // DOM 요소 가져오기
-        const form = document.getElementById('qaForm');
-        const questionList = document.getElementById('questionList');
-        const userMode = document.getElementById('userMode');
-        const adminMode = document.getElementById('adminMode');
-        const goToAdminBtn = document.getElementById('goToAdminBtn');
-        const goToUserBtn = document.getElementById('goToUserBtn');
+    <!-- ===== 관리자 모드 ===== -->
+    <div id="adminMode">
+        <p class="desc" style="color:#d9534f; font-weight:bold;">[관리자 전용] 접수된 의견 목록</p>
+        <button id="refreshBtn" class="refresh-btn">🔄 새로고침</button>
+        <button id="goToUserBtn" class="admin-btn" style="margin-bottom:20px;">질문 작성 화면으로 돌아가기</button>
+        <div id="questionList"></div>
+    </div>
+</div>
 
-        // [추가] 브라우저 로컬 스토리지에서 기존 질문 데이터 불러오기 (없으면 빈 배열)
-        let questions = JSON.parse(localStorage.getItem('safety_qa_data')) || [];
+<script>
+    // ★★★ 여기에 Apps Script 배포 URL을 붙여넣으세요 ★★★
+    const API_URL = "여기에_배포된_웹앱_URL_붙여넣기";
 
-        // [추가] 질문 목록을 화면에 그리는 함수
-        function renderQuestions() {
-            questionList.innerHTML = ''; // 기존 목록 초기화
-            
-            // 시간 순서(배열에 들어간 순서)대로 출력
-            questions.forEach(q => {
+    const form          = document.getElementById('qaForm');
+    const questionList  = document.getElementById('questionList');
+    const userMode      = document.getElementById('userMode');
+    const adminMode     = document.getElementById('adminMode');
+    const goToAdminBtn  = document.getElementById('goToAdminBtn');
+    const goToUserBtn   = document.getElementById('goToUserBtn');
+    const submitBtn     = document.getElementById('submitBtn');
+    const submitStatus  = document.getElementById('submitStatus');
+    const refreshBtn    = document.getElementById('refreshBtn');
+
+    // ── 질문 등록 ──────────────────────────────────────────
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const content = document.getElementById('questionContent').value.trim();
+        if (!content) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "등록 중...";
+        submitStatus.className = "status-msg";
+        submitStatus.textContent = "";
+
+        const date = new Date().toLocaleString('ko-KR');
+
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ type: "question", content, date })
+            });
+            const result = await res.json();
+
+            if (result.result === "success") {
+                form.reset();
+                submitStatus.className = "status-msg success";
+                submitStatus.textContent = "✅ 질문이 성공적으로 접수되었습니다. 감사합니다!";
+            } else {
+                throw new Error("서버 오류");
+            }
+        } catch(err) {
+            submitStatus.className = "status-msg error";
+            submitStatus.textContent = "❌ 등록 중 오류가 발생했습니다. 다시 시도해주세요.";
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "질문 등록하기";
+        }
+    });
+
+    // ── 질문 목록 불러오기 ──────────────────────────────────
+    async function renderQuestions() {
+        questionList.innerHTML = '<div class="loading">⏳ 목록을 불러오는 중...</div>';
+
+        try {
+            const res = await fetch(API_URL + "?t=" + Date.now()); // 캐시 방지
+            const questions = await res.json();
+
+            questionList.innerHTML = '';
+
+            if (!questions.length) {
+                questionList.innerHTML = '<p style="text-align:center;color:#999;">아직 접수된 질문이 없습니다.</p>';
+                return;
+            }
+
+            // 최신 순으로 역순 출력
+            [...questions].reverse().forEach((q, idx) => {
                 const card = document.createElement('div');
                 card.className = 'question-card';
-                
-                // [수정] '익명 질문' 대신 작성된 날짜와 시간을 제목으로 사용
                 card.innerHTML = `
                     <h3>📝 ${q.date}</h3>
-                    <p>${q.content}</p>
+                    <p class="content">${escapeHtml(q.content)}</p>
+                    ${q.answer
+                        ? `<div class="answer-box">💬 <strong>답변:</strong><br>${escapeHtml(q.answer)}</div>`
+                        : `<p class="no-answer">💬 아직 답변이 등록되지 않았습니다.</p>`
+                    }
+                    <div class="answer-form">
+                        <textarea id="ans_${idx}" placeholder="답변을 입력하세요...">${q.answer || ''}</textarea>
+                        <button class="answer-submit-btn" onclick="submitAnswer(${idx}, '${encodeURIComponent(q.date)}', '${encodeURIComponent(q.content)}')">
+                            답변 저장
+                        </button>
+                    </div>
                 `;
                 questionList.append(card);
             });
+
+        } catch(err) {
+            questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다. 새로고침을 눌러주세요.</p>';
         }
+    }
 
-        // 질문 등록 이벤트
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
+    // ── 답변 저장 ───────────────────────────────────────────
+    async function submitAnswer(idx, encodedDate, encodedContent) {
+        const answerEl = document.getElementById('ans_' + idx);
+        const answer = answerEl.value.trim();
+        if (!answer) { alert("답변 내용을 입력해주세요."); return; }
 
-            const content = document.getElementById('questionContent').value;
-            const date = new Date().toLocaleString('ko-KR');
+        const date    = decodeURIComponent(encodedDate);
+        const content = decodeURIComponent(encodedContent);
 
-            // [추가] 화면에 바로 붙이는 대신, 배열에 저장하고 로컬 스토리지에 업데이트
-            questions.push({ content: content, date: date });
-            localStorage.setItem('safety_qa_data', JSON.stringify(questions));
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ type: "answer", date, content, answer })
+            });
+            const result = await res.json();
 
-            form.reset();
-            alert('질문이 성공적으로 접수되었습니다. 안전한 작업 환경을 위해 소중한 의견 감사합니다.');
-        });
-
-        // [추가] 관리자 모드 접속 버튼 클릭 이벤트 (비밀번호 확인)
-        goToAdminBtn.addEventListener('click', function() {
-            const pwd = prompt("관리자 비밀번호를 입력하세요.");
-            
-            // 비밀번호 설정 (현재 '1234'로 설정되어 있습니다. 필요시 변경하세요)
-            if (pwd === "1234") {
-                userMode.style.display = 'none';   // 사용자 입력창 숨김
-                adminMode.style.display = 'block'; // 관리자 화면 표시
-                renderQuestions();                 // 관리자 화면이 열릴 때 질문 목록 출력
-            } else if (pwd !== null) {
-                alert("비밀번호가 틀렸습니다.");
+            if (result.result === "success") {
+                alert("✅ 답변이 저장되었습니다.");
+                renderQuestions(); // 목록 새로고침
+            } else {
+                alert("❌ 저장 실패: 해당 질문을 찾지 못했습니다.");
             }
-        });
+        } catch(err) {
+            alert("❌ 오류가 발생했습니다. 다시 시도해주세요.");
+        }
+    }
 
-        // [추가] 사용자 모드로 돌아가기 버튼 클릭 이벤트
-        goToUserBtn.addEventListener('click', function() {
-            adminMode.style.display = 'none';  // 관리자 화면 숨김
-            userMode.style.display = 'block';  // 사용자 입력창 표시
-        });
-    </script>
+    // ── XSS 방지용 HTML 이스케이프 ─────────────────────────
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    // ── 관리자 모드 전환 ────────────────────────────────────
+    goToAdminBtn.addEventListener('click', function() {
+        const pwd = prompt("관리자 비밀번호를 입력하세요.");
+        if (pwd === "1234") {          // ← 비밀번호 변경 가능
+            userMode.style.display  = 'none';
+            adminMode.style.display = 'block';
+            renderQuestions();
+        } else if (pwd !== null) {
+            alert("비밀번호가 틀렸습니다.");
+        }
+    });
+
+    goToUserBtn.addEventListener('click', function() {
+        adminMode.style.display = 'none';
+        userMode.style.display  = 'block';
+    });
+
+    refreshBtn.addEventListener('click', renderQuestions);
+</script>
 </body>
 </html>
