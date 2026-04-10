@@ -299,9 +299,20 @@
         });
     }
 
-    // ✅ 달력의 날짜를 바꿀 때마다 '새로고침 없이' 즉시 화면 업데이트!
+    // ✅ 달력의 날짜를 바꿀 때마다... (기존 코드)
     document.getElementById('dateFilter').addEventListener('change', renderFilteredQuestions);
+    
+    // ✅ 최신화 버튼을 누르면... (기존 코드)
+    document.getElementById('refreshDataBtn').addEventListener('click', fetchQuestions);
 
+    // ⬇️ 여기서부터 복사해서 추가해 주세요 ⬇️
+    // ⏰ 대시보드 모드: 관리자 화면이 켜져 있을 때만 10초마다 몰래 데이터를 가져옵니다.
+    setInterval(function() {
+        if (adminMode.style.display === 'block') { // 관리자 화면을 보고 있을 때만 작동
+            fetchQuestions(); // 서버에서 최신 데이터를 몰래 가져와서 화면에 뿌립니다
+        }
+    }, 10000); // 10000은 10초를 의미합니다. (30초는 30000)
+    
     // ── XSS 방지용 HTML 이스케이프 ─────────────────────────
     function escapeHtml(str) {
         return str
