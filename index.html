@@ -186,8 +186,13 @@
     <!-- ===== 관리자 모드 ===== -->
     <div id="adminMode">
         <p class="desc" style="color:#d9534f; font-weight:bold;">[관리자 전용] 접수된 의견 목록</p>
-        <button id="refreshBtn" class="refresh-btn">🔄 새로고침</button>
-        <button id="goToUserBtn" class="admin-btn" style="margin-bottom:20px;">질문 작성 화면으로 돌아가기</button>
+        <button id="goToUserBtn" class="admin-btn" style="margin-bottom:15px;">질문 작성 화면으로 돌아가기</button>
+        
+        <div style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px;">
+            <label for="dateFilter" style="display:inline; margin-right:10px; font-weight:bold;">📅 날짜 검색:</label>
+            <input type="date" id="dateFilter" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        
         <div id="questionList"></div>
     </div>
 </div>
@@ -248,77 +253,54 @@
         }
     });
 
-    // ── 질문 목록 불러오기 ──────────────────────────────────
-    async function renderQuestions() {
+    // ── 데이터 보관용 변수 (새로 추가됨) ─────────────────────
+    let allQuestions = [];
+
+    // ── 질문 목록 서버에서 불러오기 (한 번만 실행됨) ──────────
+    async function fetchQuestions() {
         questionList.innerHTML = '<div class="loading">⏳ 목록을 불러오는 중...</div>';
-
         try {
-            const res = await fetch(API_URL + "?t=" + Date.now(), { redirect: "follow" }); // 👈 구글 리다이렉트 허용 옵션 추가
-            const questions = await res.json();
-
-            questionList.innerHTML = '';
-
-            if (!questions.length) {
-                questionList.innerHTML = '<p style="text-align:center;color:#999;">아직 접수된 질문이 없습니다.</p>';
-                return;
-            }
-
-            // 최신 순으로 역순 출력
-            [...questions].reverse().forEach((q, idx) => {
-                const card = document.createElement('div');
-                card.className = 'question-card';
-                card.innerHTML = `
-                    <h3>📝 ${q.date}</h3>
-                    <p class="content">${escapeHtml(q.content)}</p>
-                    ${q.answer
-                        ? `<div class="answer-box">💬 <strong>답변:</strong><br>${escapeHtml(q.answer)}</div>`
-                        : `<p class="no-answer">💬 아직 답변이 등록되지 않았습니다.</p>`
-                    }
-                    <div class="answer-form">
-                        <textarea id="ans_${idx}" placeholder="답변을 입력하세요...">${q.answer || ''}</textarea>
-                        <button class="answer-submit-btn" onclick="submitAnswer(${idx}, '${encodeURIComponent(q.date)}', '${encodeURIComponent(q.content)}')">
-                            답변 저장
-                        </button>
-                    </div>
-                `;
-                questionList.append(card);
-            });
-
+            const res = await fetch(API_URL + "?t=" + Date.now(), { redirect: "follow" });
+            allQuestions = await res.json();
+            renderFilteredQuestions(); // 데이터를 가져온 후 화면에 그리기
         } catch(err) {
-            questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다. 새로고침을 눌러주세요.</p>';
+            questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다.</p>';
         }
     }
 
-    // ── 답변 저장 ───────────────────────────────────────────
-    async function submitAnswer(idx, encodedDate, encodedContent) {
-        const answerEl = document.getElementById('ans_' + idx);
-        const answer = answerEl.value.trim();
-        if (!answer) { alert("답변 내용을 입력해주세요."); return; }
+    // ── 날짜 조건에 맞게 즉시 화면 그리기 (실시간 필터링!) ──────
+    function renderFilteredQuestions() {
+        questionList.innerHTML = '';
+        
+        const filterDate = document.getElementById('dateFilter').value; // 달력에서 선택한 날짜 (예: 2026-04-10)
+        let filtered = allQuestions;
 
-        const date    = decodeURIComponent(encodedDate);
-        const content = decodeURIComponent(encodedContent);
-
-       try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8"
-                },
-                redirect: "follow", // 👈 구글 서버의 리다이렉트를 정상적으로 따라가도록 추가
-                body: JSON.stringify({ type: "answer", date, content, answer })
-            });
-            const result = await res.json();
-
-            if (result.result === "success") {
-                alert("✅ 답변이 저장되었습니다.");
-                renderQuestions(); // 목록 새로고침
-            } else {
-                alert("❌ 저장 실패: 해당 질문을 찾지 못했습니다.");
-            }
-        } catch(err) {
-            alert("❌ 오류가 발생했습니다. 다시 시도해주세요.");
+        // 선택한 날짜가 있으면 해당 날짜만 걸러냅니다.
+        if (filterDate) {
+            const [y, m, d] = filterDate.split('-');
+            const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`; // 구글 시트에 찍힌 날짜 형식과 맞춤
+            filtered = allQuestions.filter(q => q.date.includes(searchStr));
         }
+
+        if (!filtered.length) {
+            questionList.innerHTML = '<p style="text-align:center;color:#999;">해당 날짜에 접수된 의견이 없습니다.</p>';
+            return;
+        }
+
+        // 최신 순으로 역순 출력 (답변 관련 코드는 모두 삭제되었습니다)
+        [...filtered].reverse().forEach((q) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <h3>📝 ${q.date}</h3>
+                <p class="content">${escapeHtml(q.content)}</p>
+            `;
+            questionList.append(card);
+        });
     }
+
+    // ✅ 달력의 날짜를 바꿀 때마다 '새로고침 없이' 즉시 화면 업데이트!
+    document.getElementById('dateFilter').addEventListener('change', renderFilteredQuestions);
 
     // ── XSS 방지용 HTML 이스케이프 ─────────────────────────
     function escapeHtml(str) {
@@ -335,7 +317,7 @@
         if (pwd === "1234") {          // ← 비밀번호 변경 가능
             userMode.style.display  = 'none';
             adminMode.style.display = 'block';
-            renderQuestions();
+            fetchQuestions();
         } else if (pwd !== null) {
             alert("비밀번호가 틀렸습니다.");
         }
@@ -345,8 +327,7 @@
         adminMode.style.display = 'none';
         userMode.style.display  = 'block';
     });
-
-    refreshBtn.addEventListener('click', renderQuestions);
+    
 </script>
 </body>
 </html>
