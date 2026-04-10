@@ -160,8 +160,15 @@
             background-color: #17a2b8;
             margin-bottom: 16px;
         }
+
         .refresh-btn:hover { background-color: #138496; }
-    </style>
+        
+        @media (max-width: 768px) {
+            #goToAdminBtn {
+                display: none !important;
+            }
+        }
+</style>
 </head>
 <body>
 <div class="container">
@@ -199,8 +206,7 @@
     </div>
 </div>
 
-<script>
-    // ★★★ 여기에 Apps Script 배포 URL을 붙여넣으세요 ★★★
+<script>    
     const API_URL = "https://script.google.com/macros/s/AKfycbzsWR7BzuhVSp7ytG9LyEStn30iQY_kCvbMEFO10xE6vfTR2KUJ5UogCCoBr61fFba-JQ/exec";
 
     const form          = document.getElementById('qaForm');
@@ -241,13 +247,12 @@
                 form.reset();
                 submitStatus.className = "status-msg success";
                 submitStatus.textContent = "✅ 질문이 성공적으로 접수되었습니다. 감사합니다!";
-            } else {
-                // ✅ 구글 스크립트가 보내준 '진짜 에러 이유'를 던집니다!
+            } else {                
                 throw new Error(result.message || "알 수 없는 에러가 발생했습니다."); 
             }
         } catch(err) {
             submitStatus.className = "status-msg error";
-            submitStatus.textContent = "❌ 오류 상세: " + err.message; // 👈 진짜 에러의 이름을 화면에 출력합니다!
+            submitStatus.textContent = "❌ 오류 상세: " + err.message; 
             console.error("에러 원인:", err);
         } finally {
             submitBtn.disabled = false;
@@ -255,18 +260,32 @@
         }
     });
 
-    // ── 데이터 보관용 변수 (새로 추가됨) ─────────────────────
+   // ── 데이터 보관용 변수 ─────────────────────────────────
     let allQuestions = [];
-
-    // ── 질문 목록 서버에서 불러오기 (한 번만 실행됨) ──────────
-    async function fetchQuestions() {
-        questionList.innerHTML = '<div class="loading">⏳ 목록을 불러오는 중...</div>';
+    let lastDataString = ""; 
+    
+    async function fetchQuestions(isBackground = false) {
+        if (!isBackground) {
+            questionList.innerHTML = '<div class="loading">⏳ 목록을 불러오는 중...</div>';
+        }
+        
         try {
             const res = await fetch(API_URL + "?t=" + Date.now(), { redirect: "follow" });
-            allQuestions = await res.json();
-            renderFilteredQuestions(); // 데이터를 가져온 후 화면에 그리기
+            const newData = await res.json();
+            const newDataString = JSON.stringify(newData); // 데이터를 글자로 변환해서 비교 준비
+            
+            if (lastDataString !== newDataString) {
+                allQuestions = newData;
+                lastDataString = newDataString;
+                renderFilteredQuestions();
+            } else if (!isBackground) {
+                // 수동으로 버튼을 눌렀는데 새 글이 없을 때는 화면만 원상복구 해줍니다.
+                renderFilteredQuestions();
+            }
         } catch(err) {
-            questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다.</p>';
+            if (!isBackground) {
+                questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다.</p>';
+            }
         }
     }
 
@@ -301,19 +320,15 @@
         });
     }
 
-    // ✅ 달력의 날짜를 바꿀 때마다... (기존 코드)
     document.getElementById('dateFilter').addEventListener('change', renderFilteredQuestions);
     
-    // ✅ 최신화 버튼을 누르면... (기존 코드)
     document.getElementById('refreshDataBtn').addEventListener('click', fetchQuestions);
 
-    // ⬇️ 여기서부터 복사해서 추가해 주세요 ⬇️
-    // ⏰ 대시보드 모드: 관리자 화면이 켜져 있을 때만 10초마다 몰래 데이터를 가져옵니다.
     setInterval(function() {
-        if (adminMode.style.display === 'block') { // 관리자 화면을 보고 있을 때만 작동
-            fetchQuestions(); // 서버에서 최신 데이터를 몰래 가져와서 화면에 뿌립니다
+        if (adminMode.style.display === 'block') { 
+            fetchQuestions(true); // 👈 true를 넣어서 깜빡임 없이 조용히 확인만 하라고 지시합니다!
         }
-    }, 10000); // 10000은 10초를 의미합니다. (30초는 30000)
+    }, 10000);
     
     // ── XSS 방지용 HTML 이스케이프 ─────────────────────────
     function escapeHtml(str) {
@@ -339,8 +354,7 @@
     goToUserBtn.addEventListener('click', function() {
         adminMode.style.display = 'none';
         userMode.style.display  = 'block';
-        
-        // ✅ 로그아웃 시 기존에 보던 날짜와 데이터 목록을 깨끗하게 지웁니다!
+                
         document.getElementById('dateFilter').value = ''; 
         questionList.innerHTML = '';
         allQuestions = [];
