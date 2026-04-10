@@ -239,7 +239,8 @@
             }
         } catch(err) {
             submitStatus.className = "status-msg error";
-            submitStatus.textContent = "❌ 등록 중 오류가 발생했습니다. 다시 시도해주세요.";
+            submitStatus.textContent = "❌ 오류 상세: " + err.message; // 👈 진짜 에러의 이름을 화면에 출력합니다!
+            console.error("에러 원인:", err);
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = "질문 등록하기";
