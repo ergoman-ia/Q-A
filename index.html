@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>근골격계부담작업 유해요인조사 Q&A</title>
+    <title>근골 Q&A</title>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
@@ -196,14 +196,14 @@
 
     <!-- ===== 사용자 모드 ===== -->
     <div id="userMode">
-        <p class="desc">현장의 유해 요인이나 작업 불편 사항을 자유롭게 적어주세요.<br>본 조사는 <strong>완전 익명</strong>으로 진행됩니다.</p>
+        <p class="desc">근골격계부담작업 유해요인조사 관련해 질문하십시오.<br><strong>완전 익명</strong>으로 진행됩니다.</p>
 
         <form id="qaForm">
             <div class="form-group">
-                <label for="questionContent">질문 및 건의사항</label>
-                <textarea id="questionContent" placeholder="작업 중 느끼는 신체적 부담(목, 어깨, 허리 등)이나 개선이 필요한 사항을 자유롭게 적어주세요." required></textarea>
+                <label for="questionContent">질문사항</label>
+                <textarea id="questionContent" placeholder="근골격계부담작업 유해요인조사와 관련한 사항을 자유롭게 적어주세요." required></textarea>
             </div>
-            <button type="submit" id="submitBtn">질문 등록하기</button>
+            <button type="submit" id="submitBtn">제출하기</button>
             <div class="status-msg" id="submitStatus"></div>
         </form>
 
@@ -212,8 +212,6 @@
 
     <!-- ===== 관리자 모드 ===== -->
     <div id="adminMode">
-        <p class="desc" style="color:#d9534f; font-weight:bold;">[관리자 전용] 접수된 의견 목록</p>
-        
         <button id="goToUserBtn" class="admin-btn" style="background-color:#dc3545; margin-bottom:15px;">🔒 로그아웃 (사용자 모드로)</button>
         
         <div style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
