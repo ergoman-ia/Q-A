@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>근골격계부담작업 유해요인조사 질의응답</title>
+    <style>
+        /* [기존 CSS 코드 완벽 유지] */
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0056b3;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        p.desc {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #444;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            line-height: 1.5;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #questionList {
+            margin-top: 30px;
+        }
+        .question-card {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 5px solid #0056b3;
+        }
+        .question-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #0056b3;
+        }
+        .question-card p {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        
+        /* [추가된 CSS] 모드 전환 버튼 및 화면 숨김 처리용 */
+        .admin-btn {
+            background-color: #6c757d; /* 눈에 덜 띄는 회색으로 처리 */
+            margin-top: 20px;
+        }
+        .admin-btn:hover {
+            background-color: #5a6268;
+        }
+        #adminMode {
+            display: none; /* 초기에는 관리자 모드 숨김 */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>근골격계부담작업 유해요인조사 Q&A</h1>
+        
+        <div id="userMode">
+            <p class="desc">현장의 유해 요인이나 작업 불편 사항에 대해 상세히 적어주세요. 장문 입력이 가능합니다. (본 조사는 완전 익명으로 진행됩니다.)</p>
+
+            <form id="qaForm">
+                <div class="form-group">
+                    <label for="questionContent">질문 및 건의사항 상세내용</label>
+                    <textarea id="questionContent" placeholder="작업 중 느끼는 신체적 부담(목, 어깨, 허리 등)이나 개선이 필요한 사항을 자유롭게 적어주세요." required></textarea>
+                </div>
+                <button type="submit">질문 등록하기</button>
+            </form>
+            
+            <button id="goToAdminBtn" class="admin-btn">관리자 모드 접속</button>
+        </div>
+
+        <div id="adminMode">
+            <p class="desc" style="color: #d9534f; font-weight: bold;">[관리자 전용] 접수된 의견 목록</p>
+            <button id="goToUserBtn" class="admin-btn" style="margin-bottom: 20px;">질문 작성 화면으로 돌아가기</button>
+            
+            <div id="questionList">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 요소 가져오기
+        const form = document.getElementById('qaForm');
+        const questionList = document.getElementById('questionList');
+        const userMode = document.getElementById('userMode');
+        const adminMode = document.getElementById('adminMode');
+        const goToAdminBtn = document.getElementById('goToAdminBtn');
+        const goToUserBtn = document.getElementById('goToUserBtn');
+
+        // [추가] 브라우저 로컬 스토리지에서 기존 질문 데이터 불러오기 (없으면 빈 배열)
+        let questions = JSON.parse(localStorage.getItem('safety_qa_data')) || [];
+
+        // [추가] 질문 목록을 화면에 그리는 함수
+        function renderQuestions() {
+            questionList.innerHTML = ''; // 기존 목록 초기화
+            
+            // 시간 순서(배열에 들어간 순서)대로 출력
+            questions.forEach(q => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                
+                // [수정] '익명 질문' 대신 작성된 날짜와 시간을 제목으로 사용
+                card.innerHTML = `
+                    <h3>📝 ${q.date}</h3>
+                    <p>${q.content}</p>
+                `;
+                questionList.append(card);
+            });
+        }
+
+        // 질문 등록 이벤트
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const content = document.getElementById('questionContent').value;
+            const date = new Date().toLocaleString('ko-KR');
+
+            // [추가] 화면에 바로 붙이는 대신, 배열에 저장하고 로컬 스토리지에 업데이트
+            questions.push({ content: content, date: date });
+            localStorage.setItem('safety_qa_data', JSON.stringify(questions));
+
+            form.reset();
+            alert('질문이 성공적으로 접수되었습니다. 안전한 작업 환경을 위해 소중한 의견 감사합니다.');
+        });
+
+        // [추가] 관리자 모드 접속 버튼 클릭 이벤트 (비밀번호 확인)
+        goToAdminBtn.addEventListener('click', function() {
+            const pwd = prompt("관리자 비밀번호를 입력하세요.");
+            
+            // 비밀번호 설정 (현재 '1234'로 설정되어 있습니다. 필요시 변경하세요)
+            if (pwd === "1234") {
+                userMode.style.display = 'none';   // 사용자 입력창 숨김
+                adminMode.style.display = 'block'; // 관리자 화면 표시
+                renderQuestions();                 // 관리자 화면이 열릴 때 질문 목록 출력
+            } else if (pwd !== null) {
+                alert("비밀번호가 틀렸습니다.");
+            }
+        });
+
+        // [추가] 사용자 모드로 돌아가기 버튼 클릭 이벤트
+        goToUserBtn.addEventListener('click', function() {
+            adminMode.style.display = 'none';  // 관리자 화면 숨김
+            userMode.style.display = 'block';  // 사용자 입력창 표시
+        });
+    </script>
+</body>
+</html>
