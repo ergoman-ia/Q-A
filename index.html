@@ -222,6 +222,9 @@
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8" // 👈 모바일 호환성을 위해 추가된 부분입니다!
+                },
                 body: JSON.stringify({ type: "question", content, date })
             });
             const result = await res.json();
