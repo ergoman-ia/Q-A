@@ -223,8 +223,9 @@
             const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
-                    "Content-Type": "text/plain;charset=utf-8" // 👈 모바일 호환성을 위해 추가된 부분입니다!
+                    "Content-Type": "text/plain;charset=utf-8"
                 },
+                redirect: "follow", // 👈 구글 서버의 리다이렉트를 정상적으로 따라가도록 추가
                 body: JSON.stringify({ type: "question", content, date })
             });
             const result = await res.json();
