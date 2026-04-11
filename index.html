@@ -237,14 +237,14 @@
     const submitStatus  = document.getElementById('submitStatus');
     const refreshBtn    = document.getElementById('refreshBtn');
 
-    // ── 질문 등록 ──────────────────────────────────────────
+    // ── 질문 제출 ──────────────────────────────────────────
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         const content = document.getElementById('questionContent').value.trim();
         if (!content) return;
 
         submitBtn.disabled = true;
-        submitBtn.textContent = "등록 중...";
+        submitBtn.textContent = "접수 중...";
         submitStatus.className = "status-msg";
         submitStatus.textContent = "";
 
@@ -274,7 +274,7 @@
             console.error("에러 원인:", err);
         } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = "질문 등록하기";
+            submitBtn.textContent = "제출하기";
         }
     });
 
