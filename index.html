@@ -99,7 +99,6 @@
             display: none;
         }
 
-        /* 질문 카드 */
         .question-card {
             background-color: #e9ecef;
             padding: 15px;
@@ -121,51 +120,6 @@
             line-height: 1.6;
         }
 
-        /* 답변 영역 */
-        .answer-box {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
-            border-radius: 4px;
-            padding: 10px;
-            font-size: 14px;
-            color: #155724;
-            white-space: pre-wrap;
-            line-height: 1.6;
-        }
-
-        .no-answer {
-            color: #999;
-            font-size: 13px;
-            font-style: italic;
-        }
-
-        /* 관리자 답변 입력 폼 */
-        .answer-form {
-            margin-top: 10px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .answer-form textarea {
-            min-height: 60px;
-            font-size: 13px;
-            flex: 1;
-        }
-
-        .answer-submit-btn {
-            width: auto;
-            padding: 8px 14px;
-            font-size: 13px;
-            background-color: #0056b3;
-            flex-shrink: 0;
-            align-self: flex-end;
-        }
-
-        .answer-submit-btn:hover {
-            background-color: #004494;
-        }
-
-        /* 로딩 스피너 */
         .loading {
             text-align: center;
             color: #888;
@@ -173,7 +127,6 @@
             font-size: 14px;
         }
 
-        /* 상태 메시지 */
         .status-msg {
             text-align: center;
             font-size: 13px;
@@ -197,19 +150,14 @@
 
         .question-card.answered {
             background-color: #f8f9fa;
-            /* 옅은 회색 배경 */
             border-left-color: #adb5bd;
-            /* 왼쪽 테두리도 회색으로 */
             opacity: 0.7;
-            /* 전체적으로 살짝 흐리게 */
         }
 
         .question-card.answered h3,
         .question-card.answered .content {
             color: #6c757d;
-            /* 글자색도 옅은 회색으로 */
             text-decoration: line-through;
-            /* (선택사항) 글자에 취소선 긋기 */
         }
 
         .chk-label {
@@ -220,6 +168,92 @@
             align-items: center;
             gap: 5px;
             color: #444;
+        }
+
+        /* ── 비밀번호 모달 ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 28px 24px 20px;
+            width: 300px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-box h2 {
+            margin: 0;
+            font-size: 16px;
+            color: #0056b3;
+            text-align: center;
+        }
+
+        .pwd-input-wrap {
+            position: relative;
+        }
+
+        .pwd-input-wrap input {
+            width: 100%;
+            padding: 10px 38px 10px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        .pwd-toggle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #888;
+            width: auto;
+            padding: 0;
+        }
+
+        .modal-error {
+            color: #dc3545;
+            font-size: 13px;
+            text-align: center;
+            min-height: 16px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .modal-btns button {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .modal-cancel {
+            background-color: #6c757d;
+        }
+
+        .modal-cancel:hover {
+            background-color: #5a6268;
         }
     </style>
 </head>
@@ -262,6 +296,22 @@
         </div>
     </div>
 
+    <!-- ===== 비밀번호 모달 ===== -->
+    <div class="modal-overlay" id="pwdModal">
+        <div class="modal-box">
+            <h2>🔐 관리자 로그인</h2>
+            <div class="pwd-input-wrap">
+                <input type="password" id="pwdInput" placeholder="비밀번호를 입력하세요" autocomplete="off">
+                <button type="button" class="pwd-toggle" id="pwdToggle">👁</button>
+            </div>
+            <div class="modal-error" id="pwdError"></div>
+            <div class="modal-btns">
+                <button type="button" class="modal-cancel" id="pwdCancel">취소</button>
+                <button type="button" id="pwdConfirm">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzsWR7BzuhVSp7ytG9LyEStn30iQY_kCvbMEFO10xE6vfTR2KUJ5UogCCoBr61fFba-JQ/exec";
 
@@ -273,7 +323,88 @@
         const goToUserBtn = document.getElementById('goToUserBtn');
         const submitBtn = document.getElementById('submitBtn');
         const submitStatus = document.getElementById('submitStatus');
-        const refreshDataBtn = document.getElementById('refreshDataBtn');
+
+        // ── 비밀번호 모달 ──────────────────────────────────────
+        const pwdModal = document.getElementById('pwdModal');
+        const pwdInput = document.getElementById('pwdInput');
+        const pwdToggle = document.getElementById('pwdToggle');
+        const pwdConfirm = document.getElementById('pwdConfirm');
+        const pwdCancel = document.getElementById('pwdCancel');
+        const pwdError = document.getElementById('pwdError');
+
+        // 비밀번호 표시/숨기기 토글
+        pwdToggle.addEventListener('click', function () {
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                pwdToggle.textContent = '🙈';
+            } else {
+                pwdInput.type = 'password';
+                pwdToggle.textContent = '👁';
+            }
+        });
+
+        // 모달 열기
+        goToAdminBtn.addEventListener('click', function () {
+            pwdInput.value = '';
+            pwdInput.type = 'password';
+            pwdToggle.textContent = '👁';
+            pwdError.textContent = '';
+            pwdModal.classList.add('active');
+            setTimeout(() => pwdInput.focus(), 50);
+        });
+
+        // 모달 닫기
+        pwdCancel.addEventListener('click', closeModal);
+        pwdModal.addEventListener('click', function (e) {
+            if (e.target === pwdModal) closeModal(); // 배경 클릭 시 닫기
+        });
+
+        function closeModal() {
+            pwdModal.classList.remove('active');
+            pwdInput.value = '';
+            pwdError.textContent = '';
+        }
+
+        // Enter 키로 확인
+        pwdInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') pwdConfirm.click();
+        });
+        
+        const ADMIN_HASH = "d7e46480f7570a02bbe655c893bc6259052f596267db07938574d94340849e36";
+
+        let adminKey = "";
+
+        async function hashPassword(pwd) {
+            const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        pwdConfirm.addEventListener('click', async function () {
+            const pwd = pwdInput.value;
+            if (!pwd) {
+                pwdError.textContent = "비밀번호를 입력하세요.";
+                return;
+            }
+
+            pwdConfirm.disabled = true;
+            pwdConfirm.textContent = "확인 중...";
+
+            const hashed = await hashPassword(pwd);
+            if (hashed === ADMIN_HASH) {
+                adminKey = pwd;
+                closeModal();
+                userMode.style.display = 'none';
+                adminMode.style.display = 'block';
+                fetchQuestions();
+            } else {
+                pwdError.textContent = "❌ 비밀번호가 틀렸습니다.";
+                pwdInput.value = '';
+                pwdInput.focus();
+            }
+
+            pwdConfirm.disabled = false;
+            pwdConfirm.textContent = "확인";
+        });
 
         // ── 질문 제출 ──────────────────────────────────────────
         form.addEventListener('submit', async function (e) {
@@ -291,10 +422,8 @@
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
-                    },
-                    redirect: "follow", // 👈 구글 서버의 리다이렉트를 정상적으로 따라가도록 추가
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    redirect: "follow",
                     body: JSON.stringify({ type: "question", content, date })
                 });
                 if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
@@ -334,14 +463,17 @@
                 const res = await fetch(API_URL + "?adminKey=" + encodeURIComponent(adminKey) + "&t=" + Date.now(), { redirect: "follow" });
                 if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
                 const newData = await res.json();
-                const newDataString = JSON.stringify(newData); // 데이터를 글자로 변환해서 비교 준비
+
+                // unauthorized 응답 처리
+                if (newData.error === "unauthorized") throw new Error("인증 실패");
+
+                const newDataString = JSON.stringify(newData);
 
                 if (lastDataString !== newDataString) {
                     allQuestions = newData;
                     lastDataString = newDataString;
                     renderFilteredQuestions();
                 } else if (!isBackground) {
-                    // 수동으로 버튼을 눌렀는데 새 글이 없을 때는 화면만 원상복구 해줍니다.
                     renderFilteredQuestions();
                 }
             } catch (err) {
@@ -351,17 +483,16 @@
             }
         }
 
-        // ── 날짜 조건에 맞게 즉시 화면 그리기 (실시간 필터링!) ──────
+        // ── 날짜 필터링 후 화면 그리기 ────────────────────────
         function renderFilteredQuestions() {
             questionList.innerHTML = '';
 
-            const filterDate = document.getElementById('dateFilter').value; // 달력에서 선택한 날짜 (예: 2026-04-10)
+            const filterDate = document.getElementById('dateFilter').value;
             let filtered = allQuestions;
 
-            // 선택한 날짜가 있으면 해당 날짜만 걸러냅니다.
             if (filterDate) {
                 const [y, m, d] = filterDate.split('-');
-                const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`; // 구글 시트에 찍힌 날짜 형식과 맞춤
+                const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`;
                 filtered = allQuestions.filter(q => q.date.includes(searchStr));
             }
 
@@ -370,21 +501,17 @@
                 return;
             }
 
-            // 최신 순으로 역순 출력
-            [...filtered].reverse().forEach((q) => {
+            // ✅ index 추가
+            [...filtered].reverse().forEach((q, index) => {
                 const card = document.createElement('div');
                 card.className = 'question-card';
 
-                // 날짜의 숫자만 뽑아서 고유 ID 만들기 (예: chk_2026410183025)
+                // ✅ index 포함으로 충돌 방지
                 const uniqueId = 'chk_' + index + '_' + q.date.replace(/[^0-9]/g, '');
 
-                // 내 컴퓨터(브라우저)가 이 질문을 체크했었다고 기억하고 있는지 확인
                 const isChecked = localStorage.getItem(uniqueId) === "true";
-                if (isChecked) {
-                    card.classList.add('answered'); // 기억하고 있다면 회색으로 칠하기
-                }
+                if (isChecked) card.classList.add('answered');
 
-                // 양쪽 끝으로 배치하기 위해 제목 부분에 flex 스타일 적용
                 card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                     <h3 style="margin: 0;">📝 ${q.date}</h3>
@@ -395,15 +522,14 @@
                 <p class="content" style="margin: 0;">${escapeHtml(q.content)}</p>
             `;
 
-                // 체크박스를 누를 때마다 색상을 바꾸고 브라우저에 기억시키기
                 const checkbox = card.querySelector(`#${uniqueId}`);
                 checkbox.addEventListener('change', function () {
                     if (this.checked) {
                         card.classList.add('answered');
-                        localStorage.setItem(uniqueId, "true"); // 체크했다고 메모
+                        localStorage.setItem(uniqueId, "true");
                     } else {
                         card.classList.remove('answered');
-                        localStorage.removeItem(uniqueId); // 메모 지우기
+                        localStorage.removeItem(uniqueId);
                     }
                 });
 
@@ -412,15 +538,15 @@
         }
 
         document.getElementById('dateFilter').addEventListener('change', renderFilteredQuestions);
-
-        document.getElementById('refreshDataBtn').addEventListener('click', fetchQuestions);
+        document.getElementById('refreshDataBtn').addEventListener('click', () => fetchQuestions());
 
         setInterval(function () {
             if (adminMode.style.display === 'block') {
-                fetchQuestions(true); // 👈 true를 넣어서 깜빡임 없이 조용히 확인만 하라고 지시합니다!
+                fetchQuestions(true);
             }
         }, 30000);
 
+        // ── XSS 방지용 HTML 이스케이프 ────────────────────────
         function escapeHtml(str) {
             return str
                 .replace(/&/g, "&amp;")
@@ -430,39 +556,16 @@
                 .replace(/'/g, "&#039;");
         }
 
-        let adminKey = "";
-
-        const ADMIN_HASH = "d7e46480f7570a02bbe655c893bc6259052f596267db07938574d94340849e36"; 
-
-        async function hashPassword(pwd) {
-            const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd));
-            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        goToAdminBtn.addEventListener('click', async function () {
-            const pwd = prompt("관리자 비밀번호를 입력하세요.");
-            if (!pwd) return;
-
-            const hashed = await hashPassword(pwd);
-            if (hashed === ADMIN_HASH) {
-                adminKey = pwd;
-                userMode.style.display = 'none';
-                adminMode.style.display = 'block';
-                fetchQuestions();
-            } else {
-                alert("비밀번호가 틀렸습니다.");
-            }
-        });
-
+        // ── 로그아웃 ──────────────────────────────────────────
         goToUserBtn.addEventListener('click', function () {
             adminMode.style.display = 'none';
             userMode.style.display = 'block';
-
+            adminKey = "";           // ✅ 키 초기화
+            lastDataString = "";     // ✅ 캐시 초기화
             document.getElementById('dateFilter').value = '';
             questionList.innerHTML = '';
             allQuestions = [];
         });
-
     </script>
 </body>
 
