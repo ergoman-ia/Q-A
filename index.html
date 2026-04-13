@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,35 +16,41 @@
             flex-direction: column;
             align-items: center;
         }
+
         .container {
             background-color: #ffffff;
             width: 100%;
             max-width: 600px;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #0056b3;
             font-size: 22px;
             text-align: center;
             margin-bottom: 10px;
         }
+
         p.desc {
             text-align: center;
             color: #666;
             margin-bottom: 20px;
             font-size: 14px;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
             color: #444;
         }
+
         textarea {
             width: 100%;
             padding: 10px;
@@ -56,6 +63,7 @@
             line-height: 1.6;
             font-size: 15px;
         }
+
         button {
             width: 100%;
             padding: 12px;
@@ -68,16 +76,28 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        button:hover { background-color: #218838; }
-        button:disabled { background-color: #aaa; cursor: not-allowed; }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
 
         .admin-btn {
             background-color: #6c757d;
             margin-top: 12px;
         }
-        .admin-btn:hover { background-color: #5a6268; }
 
-        #adminMode { display: none; }
+        .admin-btn:hover {
+            background-color: #5a6268;
+        }
+
+        #adminMode {
+            display: none;
+        }
 
         /* 질문 카드 */
         .question-card {
@@ -87,11 +107,13 @@
             margin-bottom: 12px;
             border-left: 5px solid #0056b3;
         }
+
         .question-card h3 {
             margin: 0 0 8px 0;
             font-size: 14px;
             color: #0056b3;
         }
+
         .question-card .content {
             margin: 0 0 10px 0;
             white-space: pre-wrap;
@@ -110,6 +132,7 @@
             white-space: pre-wrap;
             line-height: 1.6;
         }
+
         .no-answer {
             color: #999;
             font-size: 13px;
@@ -122,11 +145,13 @@
             display: flex;
             gap: 8px;
         }
+
         .answer-form textarea {
             min-height: 60px;
             font-size: 13px;
             flex: 1;
         }
+
         .answer-submit-btn {
             width: auto;
             padding: 8px 14px;
@@ -135,7 +160,10 @@
             flex-shrink: 0;
             align-self: flex-end;
         }
-        .answer-submit-btn:hover { background-color: #004494; }
+
+        .answer-submit-btn:hover {
+            background-color: #004494;
+        }
 
         /* 로딩 스피너 */
         .loading {
@@ -152,17 +180,15 @@
             margin-top: 8px;
             min-height: 18px;
         }
-        .status-msg.success { color: #28a745; }
-        .status-msg.error   { color: #dc3545; }
 
-        /* 새로고침 버튼 */
-        .refresh-btn {
-            background-color: #17a2b8;
-            margin-bottom: 16px;
+        .status-msg.success {
+            color: #28a745;
         }
 
-        .refresh-btn:hover { background-color: #138496; }
-        
+        .status-msg.error {
+            color: #dc3545;
+        }
+
         @media (max-width: 768px) {
             #goToAdminBtn {
                 display: none !important;
@@ -170,15 +196,22 @@
         }
 
         .question-card.answered {
-            background-color: #f8f9fa; /* 옅은 회색 배경 */
-            border-left-color: #adb5bd; /* 왼쪽 테두리도 회색으로 */
-            opacity: 0.7; /* 전체적으로 살짝 흐리게 */
+            background-color: #f8f9fa;
+            /* 옅은 회색 배경 */
+            border-left-color: #adb5bd;
+            /* 왼쪽 테두리도 회색으로 */
+            opacity: 0.7;
+            /* 전체적으로 살짝 흐리게 */
         }
-        .question-card.answered h3, 
+
+        .question-card.answered h3,
         .question-card.answered .content {
-            color: #6c757d; /* 글자색도 옅은 회색으로 */
-            text-decoration: line-through; /* (선택사항) 글자에 취소선 긋기 */
+            color: #6c757d;
+            /* 글자색도 옅은 회색으로 */
+            text-decoration: line-through;
+            /* (선택사항) 글자에 취소선 긋기 */
         }
+
         .chk-label {
             font-size: 13px;
             font-weight: normal;
@@ -188,160 +221,171 @@
             gap: 5px;
             color: #444;
         }
-</style>
+    </style>
 </head>
+
 <body>
-<div class="container">
-    <h1>근골격계부담작업 유해요인조사 Q&A</h1>
+    <div class="container">
+        <h1>근골격계부담작업 유해요인조사 Q&A</h1>
 
-    <!-- ===== 사용자 모드 ===== -->
-    <div id="userMode">
-        <p class="desc">근골격계부담작업 유해요인조사 관련해 질문하십시오.<br><strong>완전 익명</strong>으로 진행됩니다.</p>
+        <!-- ===== 사용자 모드 ===== -->
+        <div id="userMode">
+            <p class="desc">근골격계부담작업 유해요인조사 관련해 질문하십시오.<br><strong>완전 익명</strong>으로 진행됩니다.</p>
 
-        <form id="qaForm">
-            <div class="form-group">
-                <label for="questionContent">질문사항</label>
-                <textarea id="questionContent" placeholder="근골격계부담작업 유해요인조사와 관련한 사항을 자유롭게 적어주세요." required></textarea>
-            </div>
-            <button type="submit" id="submitBtn">제출하기</button>
-            <div class="status-msg" id="submitStatus"></div>
-        </form>
+            <form id="qaForm">
+                <div class="form-group">
+                    <label for="questionContent">질문사항</label>
+                    <textarea id="questionContent" placeholder="근골격계부담작업 유해요인조사와 관련한 사항을 자유롭게 적어주세요."
+                        required></textarea>
+                </div>
+                <button type="submit" id="submitBtn">제출하기</button>
+                <div class="status-msg" id="submitStatus"></div>
+            </form>
 
-        <button id="goToAdminBtn" class="admin-btn">관리자 모드 접속</button>
-    </div>
-
-    <!-- ===== 관리자 모드 ===== -->
-    <div id="adminMode">
-        <button id="goToUserBtn" class="admin-btn" style="background-color:#dc3545; margin-bottom:15px;">🔒 로그아웃 (사용자 모드로)</button>
-        
-        <div style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
-            <label for="dateFilter" style="font-weight:bold; margin:0;">📅 날짜 검색:</label>
-            <input type="date" id="dateFilter" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
-            <button id="refreshDataBtn" style="width: auto; padding: 5px 10px; font-size: 13px; background-color: #17a2b8;">🔄 최신화</button>
+            <button id="goToAdminBtn" class="admin-btn">관리자 모드 접속</button>
         </div>
-        
-        <div id="questionList"></div>
+
+        <!-- ===== 관리자 모드 ===== -->
+        <div id="adminMode">
+            <button id="goToUserBtn" class="admin-btn" style="background-color:#dc3545; margin-bottom:15px;">🔒 로그아웃
+                (사용자 모드로)</button>
+
+            <div
+                style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
+                <label for="dateFilter" style="font-weight:bold; margin:0;">📅 날짜 검색:</label>
+                <input type="date" id="dateFilter" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                <button id="refreshDataBtn"
+                    style="width: auto; padding: 5px 10px; font-size: 13px; background-color: #17a2b8;">🔄 최신화</button>
+            </div>
+
+            <div id="questionList"></div>
+        </div>
     </div>
-</div>
 
-<script>    
-    const API_URL = "https://script.google.com/macros/s/AKfycbzsWR7BzuhVSp7ytG9LyEStn30iQY_kCvbMEFO10xE6vfTR2KUJ5UogCCoBr61fFba-JQ/exec";
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzsWR7BzuhVSp7ytG9LyEStn30iQY_kCvbMEFO10xE6vfTR2KUJ5UogCCoBr61fFba-JQ/exec";
 
-    const form          = document.getElementById('qaForm');
-    const questionList  = document.getElementById('questionList');
-    const userMode      = document.getElementById('userMode');
-    const adminMode     = document.getElementById('adminMode');
-    const goToAdminBtn  = document.getElementById('goToAdminBtn');
-    const goToUserBtn   = document.getElementById('goToUserBtn');
-    const submitBtn     = document.getElementById('submitBtn');
-    const submitStatus  = document.getElementById('submitStatus');
-    const refreshBtn    = document.getElementById('refreshBtn');
+        const form = document.getElementById('qaForm');
+        const questionList = document.getElementById('questionList');
+        const userMode = document.getElementById('userMode');
+        const adminMode = document.getElementById('adminMode');
+        const goToAdminBtn = document.getElementById('goToAdminBtn');
+        const goToUserBtn = document.getElementById('goToUserBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitStatus = document.getElementById('submitStatus');
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
 
-    // ── 질문 제출 ──────────────────────────────────────────
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const content = document.getElementById('questionContent').value.trim();
-        if (!content) return;
+        // ── 질문 제출 ──────────────────────────────────────────
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const content = document.getElementById('questionContent').value.trim();
+            if (!content) return;
 
-        submitBtn.disabled = true;
-        submitBtn.textContent = "접수 중...";
-        submitStatus.className = "status-msg";
-        submitStatus.textContent = "";
+            submitBtn.disabled = true;
+            submitBtn.textContent = "접수 중...";
+            submitStatus.className = "status-msg";
+            submitStatus.textContent = "";
 
-        const date = new Date().toLocaleString('ko-KR');
+            const date = new Date().toLocaleString('ko-KR');
 
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8"
-                },
-                redirect: "follow", // 👈 구글 서버의 리다이렉트를 정상적으로 따라가도록 추가
-                body: JSON.stringify({ type: "question", content, date })
-            });
-            const result = await res.json();
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    redirect: "follow", // 👈 구글 서버의 리다이렉트를 정상적으로 따라가도록 추가
+                    body: JSON.stringify({ type: "question", content, date })
+                });
+                if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+                const result = await res.json();
 
-            if (result.result === "success") {
-                form.reset();
-                submitStatus.className = "status-msg success";
-                submitStatus.textContent = "✅ 질문이 성공적으로 접수되었습니다. 감사합니다!";
-            } else {                
-                throw new Error(result.message || "알 수 없는 에러가 발생했습니다."); 
+                if (result.result === "success") {
+                    form.reset();
+                    submitStatus.className = "status-msg success";
+                    submitStatus.textContent = "✅ 질문이 성공적으로 접수되었습니다. 감사합니다!";
+                    setTimeout(() => {
+                        submitStatus.textContent = "";
+                        submitStatus.className = "status-msg";
+                    }, 3000);
+                } else {
+                    throw new Error(result.message || "알 수 없는 에러가 발생했습니다.");
+                }
+            } catch (err) {
+                submitStatus.className = "status-msg error";
+                submitStatus.textContent = "❌ 오류 상세: " + err.message;
+                console.error("에러 원인:", err);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "제출하기";
             }
-        } catch(err) {
-            submitStatus.className = "status-msg error";
-            submitStatus.textContent = "❌ 오류 상세: " + err.message; 
-            console.error("에러 원인:", err);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "제출하기";
-        }
-    });
+        });
 
-   // ── 데이터 보관용 변수 ─────────────────────────────────
-    let allQuestions = [];
-    let lastDataString = ""; 
-    
-    async function fetchQuestions(isBackground = false) {
-        if (!isBackground) {
-            questionList.innerHTML = '<div class="loading">⏳ 목록을 불러오는 중...</div>';
-        }
-        
-        try {
-            const res = await fetch(API_URL + "?t=" + Date.now(), { redirect: "follow" });
-            const newData = await res.json();
-            const newDataString = JSON.stringify(newData); // 데이터를 글자로 변환해서 비교 준비
-            
-            if (lastDataString !== newDataString) {
-                allQuestions = newData;
-                lastDataString = newDataString;
-                renderFilteredQuestions();
-            } else if (!isBackground) {
-                // 수동으로 버튼을 눌렀는데 새 글이 없을 때는 화면만 원상복구 해줍니다.
-                renderFilteredQuestions();
-            }
-        } catch(err) {
+        // ── 데이터 보관용 변수 ─────────────────────────────────
+        let allQuestions = [];
+        let lastDataString = "";
+
+        async function fetchQuestions(isBackground = false) {
             if (!isBackground) {
-                questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다.</p>';
-            }
-        }
-    }
-
-    // ── 날짜 조건에 맞게 즉시 화면 그리기 (실시간 필터링!) ──────
-    function renderFilteredQuestions() {
-        questionList.innerHTML = '';
-        
-        const filterDate = document.getElementById('dateFilter').value; // 달력에서 선택한 날짜 (예: 2026-04-10)
-        let filtered = allQuestions;
-
-        // 선택한 날짜가 있으면 해당 날짜만 걸러냅니다.
-        if (filterDate) {
-            const [y, m, d] = filterDate.split('-');
-            const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`; // 구글 시트에 찍힌 날짜 형식과 맞춤
-            filtered = allQuestions.filter(q => q.date.includes(searchStr));
-        }
-
-        if (!filtered.length) {
-            questionList.innerHTML = '<p style="text-align:center;color:#999;">해당 날짜에 접수된 의견이 없습니다.</p>';
-            return;
-        }
-
-        // 최신 순으로 역순 출력
-        [...filtered].reverse().forEach((q) => {
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            
-            // 날짜의 숫자만 뽑아서 고유 ID 만들기 (예: chk_2026410183025)
-            const uniqueId = 'chk_' + q.date.replace(/[^0-9]/g, ''); 
-            
-            // 내 컴퓨터(브라우저)가 이 질문을 체크했었다고 기억하고 있는지 확인
-            const isChecked = localStorage.getItem(uniqueId) === "true";
-            if (isChecked) {
-                card.classList.add('answered'); // 기억하고 있다면 회색으로 칠하기
+                questionList.innerHTML = '<div class="loading">⏳ 목록을 불러오는 중...</div>';
             }
 
-            // 양쪽 끝으로 배치하기 위해 제목 부분에 flex 스타일 적용
-            card.innerHTML = `
+            try {
+                const res = await fetch(API_URL + "?adminKey=" + encodeURIComponent(adminKey) + "&t=" + Date.now(), { redirect: "follow" });
+                if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+                const newData = await res.json();
+                const newDataString = JSON.stringify(newData); // 데이터를 글자로 변환해서 비교 준비
+
+                if (lastDataString !== newDataString) {
+                    allQuestions = newData;
+                    lastDataString = newDataString;
+                    renderFilteredQuestions();
+                } else if (!isBackground) {
+                    // 수동으로 버튼을 눌렀는데 새 글이 없을 때는 화면만 원상복구 해줍니다.
+                    renderFilteredQuestions();
+                }
+            } catch (err) {
+                if (!isBackground) {
+                    questionList.innerHTML = '<p style="text-align:center;color:#dc3545;">❌ 목록을 불러오지 못했습니다.</p>';
+                }
+            }
+        }
+
+        // ── 날짜 조건에 맞게 즉시 화면 그리기 (실시간 필터링!) ──────
+        function renderFilteredQuestions() {
+            questionList.innerHTML = '';
+
+            const filterDate = document.getElementById('dateFilter').value; // 달력에서 선택한 날짜 (예: 2026-04-10)
+            let filtered = allQuestions;
+
+            // 선택한 날짜가 있으면 해당 날짜만 걸러냅니다.
+            if (filterDate) {
+                const [y, m, d] = filterDate.split('-');
+                const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`; // 구글 시트에 찍힌 날짜 형식과 맞춤
+                filtered = allQuestions.filter(q => q.date.includes(searchStr));
+            }
+
+            if (!filtered.length) {
+                questionList.innerHTML = '<p style="text-align:center;color:#999;">해당 날짜에 접수된 의견이 없습니다.</p>';
+                return;
+            }
+
+            // 최신 순으로 역순 출력
+            [...filtered].reverse().forEach((q) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+
+                // 날짜의 숫자만 뽑아서 고유 ID 만들기 (예: chk_2026410183025)
+                const uniqueId = 'chk_' + index + '_' + q.date.replace(/[^0-9]/g, '');
+
+                // 내 컴퓨터(브라우저)가 이 질문을 체크했었다고 기억하고 있는지 확인
+                const isChecked = localStorage.getItem(uniqueId) === "true";
+                if (isChecked) {
+                    card.classList.add('answered'); // 기억하고 있다면 회색으로 칠하기
+                }
+
+                // 양쪽 끝으로 배치하기 위해 제목 부분에 flex 스타일 적용
+                card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                     <h3 style="margin: 0;">📝 ${q.date}</h3>
                     <label class="chk-label" for="${uniqueId}">
@@ -351,62 +395,75 @@
                 <p class="content" style="margin: 0;">${escapeHtml(q.content)}</p>
             `;
 
-            // 체크박스를 누를 때마다 색상을 바꾸고 브라우저에 기억시키기
-            const checkbox = card.querySelector(`#${uniqueId}`);
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    card.classList.add('answered');
-                    localStorage.setItem(uniqueId, "true"); // 체크했다고 메모
-                } else {
-                    card.classList.remove('answered');
-                    localStorage.removeItem(uniqueId); // 메모 지우기
-                }
+                // 체크박스를 누를 때마다 색상을 바꾸고 브라우저에 기억시키기
+                const checkbox = card.querySelector(`#${uniqueId}`);
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        card.classList.add('answered');
+                        localStorage.setItem(uniqueId, "true"); // 체크했다고 메모
+                    } else {
+                        card.classList.remove('answered');
+                        localStorage.removeItem(uniqueId); // 메모 지우기
+                    }
+                });
+
+                questionList.append(card);
             });
+        }
 
-            questionList.append(card);
+        document.getElementById('dateFilter').addEventListener('change', renderFilteredQuestions);
+
+        document.getElementById('refreshDataBtn').addEventListener('click', fetchQuestions);
+
+        setInterval(function () {
+            if (adminMode.style.display === 'block') {
+                fetchQuestions(true); // 👈 true를 넣어서 깜빡임 없이 조용히 확인만 하라고 지시합니다!
+            }
+        }, 30000);
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        let adminKey = "";
+
+        const ADMIN_HASH = "d7e46480f7570a02bbe655c893bc6259052f596267db07938574d94340849e36"; 
+
+        async function hashPassword(pwd) {
+            const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        goToAdminBtn.addEventListener('click', async function () {
+            const pwd = prompt("관리자 비밀번호를 입력하세요.");
+            if (!pwd) return;
+
+            const hashed = await hashPassword(pwd);
+            if (hashed === ADMIN_HASH) {
+                adminKey = pwd;
+                userMode.style.display = 'none';
+                adminMode.style.display = 'block';
+                fetchQuestions();
+            } else {
+                alert("비밀번호가 틀렸습니다.");
+            }
         });
-    }
 
-    document.getElementById('dateFilter').addEventListener('change', renderFilteredQuestions);
-    
-    document.getElementById('refreshDataBtn').addEventListener('click', fetchQuestions);
+        goToUserBtn.addEventListener('click', function () {
+            adminMode.style.display = 'none';
+            userMode.style.display = 'block';
 
-    setInterval(function() {
-        if (adminMode.style.display === 'block') { 
-            fetchQuestions(true); // 👈 true를 넣어서 깜빡임 없이 조용히 확인만 하라고 지시합니다!
-        }
-    }, 10000);
-    
-    // ── XSS 방지용 HTML 이스케이프 ─────────────────────────
-    function escapeHtml(str) {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
-    }
+            document.getElementById('dateFilter').value = '';
+            questionList.innerHTML = '';
+            allQuestions = [];
+        });
 
-    // ── 관리자 모드 전환 ────────────────────────────────────
-    goToAdminBtn.addEventListener('click', function() {
-        const pwd = prompt("관리자 비밀번호를 입력하세요.");
-        if (pwd === "1234") {          // ← 비밀번호 변경 가능
-            userMode.style.display  = 'none';
-            adminMode.style.display = 'block';
-            fetchQuestions();
-        } else if (pwd !== null) {
-            alert("비밀번호가 틀렸습니다.");
-        }
-    });
-
-    goToUserBtn.addEventListener('click', function() {
-        adminMode.style.display = 'none';
-        userMode.style.display  = 'block';
-                
-        document.getElementById('dateFilter').value = ''; 
-        questionList.innerHTML = '';
-        allQuestions = [];
-    });
-    
-</script>
+    </script>
 </body>
+
 </html>
