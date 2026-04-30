@@ -518,6 +518,7 @@
                     <label class="chk-label" for="${uniqueId}">
                         <input type="checkbox" id="${uniqueId}" ${isChecked ? 'checked' : ''}> 답변 완료
                     </label>
+                    <button class="delete-btn" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑</button>
                 </div>
                 <p class="content" style="margin: 0;">${escapeHtml(q.content)}</p>
             `;
@@ -530,6 +531,43 @@
                     } else {
                         card.classList.remove('answered');
                         localStorage.removeItem(uniqueId);
+                    }
+                });
+
+                const deleteBtn = card.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', async function () {
+                    if (confirm("정말로 이 질문을 구글 시트에서 완전히 삭제하시겠습니까?")) {
+                        const originalText = deleteBtn.textContent;
+                        deleteBtn.textContent = "삭제 중...";
+                        deleteBtn.disabled = true;
+
+                        try {
+                            // 구글 앱스 스크립트로 삭제 요청 보내기
+                            const res = await fetch(API_URL, {
+                                method: 'POST',
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                redirect: "follow",
+                                body: JSON.stringify({ 
+                                    type: "delete", 
+                                    adminKey: adminKey, // 관리자 인증 키
+                                    date: q.date,       // 삭제할 질문의 날짜
+                                    content: q.content  // 삭제할 질문의 내용
+                                })
+                            });
+                            
+                            const result = await res.json();
+                            
+                            if (result.result === "success") {
+                                card.remove(); // 화면에서 삭제
+                                localStorage.removeItem(uniqueId); // 로컬 저장 상태 지우기
+                            } else {
+                                throw new Error(result.message || "삭제 실패");
+                            }
+                        } catch (err) {
+                            alert("삭제 중 오류가 발생했습니다: " + err.message);
+                            deleteBtn.textContent = originalText;
+                            deleteBtn.disabled = false;
+                        }
                     }
                 });
 
