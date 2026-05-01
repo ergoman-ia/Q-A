@@ -288,8 +288,8 @@
                 style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
                 <label for="dateFilter" style="font-weight:bold; margin:0;">📅 날짜 검색:</label>
                 <input type="date" id="dateFilter" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
-                <button id="refreshDataBtn"
-                    style="width: auto; padding: 5px 10px; font-size: 13px; background-color: #17a2b8;">🔄 최신화</button>
+                <button id="refreshDataBtn" style="width: auto; padding: 5px 10px; font-size: 13px; background-color: #17a2b8;">🔄 최신화</button>
+<button id="deleteAllBtn" style="width: auto; padding: 5px 10px; font-size: 13px; background-color: #dc3545; margin-left: 5px;">🗑️ 전체 삭제</button>
             </div>
 
             <div id="questionList"></div>
@@ -518,8 +518,7 @@
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label class="chk-label" style="font-size: 11px; margin: 0;" for="${uniqueId}">
                             <input type="checkbox" id="${uniqueId}" ${isChecked ? 'checked' : ''}> 답변완료
-                        </label>
-                        <button class="delete-btn" style="width: auto; background-color: #dc3545; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer;">🗑</button>
+                        </label>                       
                     </div>
                 </div>
                 <p class="content" style="margin: 0;">${escapeHtml(q.content)}</p>
@@ -535,44 +534,6 @@
                         localStorage.removeItem(uniqueId);
                     }
                 });
-
-                const deleteBtn = card.querySelector('.delete-btn');
-                deleteBtn.addEventListener('click', async function () {
-                    if (confirm("정말로 이 질문을 구글 시트에서 완전히 삭제하시겠습니까?")) {
-                        const originalText = deleteBtn.textContent;
-                        deleteBtn.textContent = "삭제 중...";
-                        deleteBtn.disabled = true;
-
-                        try {
-                            // 구글 앱스 스크립트로 삭제 요청 보내기
-                            const res = await fetch(API_URL, {
-                                method: 'POST',
-                                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                redirect: "follow",
-                                body: JSON.stringify({ 
-                                    type: "delete", 
-                                    adminKey: adminKey, // 관리자 인증 키
-                                    date: q.date,       // 삭제할 질문의 날짜
-                                    content: q.content  // 삭제할 질문의 내용
-                                })
-                            });
-                            
-                            const result = await res.json();
-                            
-                            if (result.result === "success") {
-                                card.remove(); // 화면에서 삭제
-                                localStorage.removeItem(uniqueId); // 로컬 저장 상태 지우기
-                            } else {
-                                throw new Error(result.message || "삭제 실패");
-                            }
-                        } catch (err) {
-                            alert("삭제 중 오류가 발생했습니다: " + err.message);
-                            deleteBtn.textContent = originalText;
-                            deleteBtn.disabled = false;
-                        }
-                    }
-                });
-
                 questionList.append(card);
             });
         }
@@ -585,6 +546,43 @@
                 fetchQuestions(true);
             }
         }, 30000);
+
+// 전체 삭제 버튼 이벤트 리스너 추가
+document.getElementById('deleteAllBtn').addEventListener('click', async function () {
+    if (confirm("⚠️ 경고: 모든 질문이 구글 시트에서 삭제됩니다. 정말 실행하시겠습니까?")) {
+        const originalText = this.textContent;
+        this.textContent = "삭제 중...";
+        this.disabled = true;
+
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                redirect: "follow",
+                body: JSON.stringify({ 
+                    type: "deleteAll", 
+                    adminKey: adminKey 
+                })
+            });
+            
+            const result = await res.json();
+            
+            if (result.result === "success") {
+                alert("모든 질문이 삭제되었습니다.");
+                allQuestions = []; // 로컬 데이터 비우기
+                lastDataString = "";
+                renderFilteredQuestions(); // 화면 갱신
+            } else {
+                throw new Error(result.message || "삭제 실패");
+            }
+        } catch (err) {
+            alert("전체 삭제 중 오류가 발생했습니다: " + err.message);
+        } finally {
+            this.textContent = originalText;
+            this.disabled = false;
+        }
+    }
+});
 
         // ── XSS 방지용 HTML 이스케이프 ────────────────────────
         function escapeHtml(str) {
