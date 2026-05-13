@@ -506,8 +506,9 @@
                 const card = document.createElement('div');
                 card.className = 'question-card';
 
-                // ✅ index 포함으로 충돌 방지
-                const uniqueId = 'chk_' + index + '_' + q.date.replace(/[^0-9]/g, '');
+                // ✅ 역순 정렬 시 index가 변동되는 문제를 해결하기 위해 고유한 절대 인덱스(indexOf)를 사용
+                const stableIndex = allQuestions.indexOf(q);
+                const uniqueId = 'chk_' + stableIndex + '_' + q.date.replace(/[^0-9]/g, '');
 
                 const isChecked = localStorage.getItem(uniqueId) === "true";
                 if (isChecked) card.classList.add('answered');
