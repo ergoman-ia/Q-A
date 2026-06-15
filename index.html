@@ -170,6 +170,31 @@
             color: #444;
         }
 
+        /* ── 개별 질문 삭제(쓰레기통) 버튼 ── */
+        .del-btn {
+            width: auto;
+            padding: 2px 6px;
+            margin: 0;
+            background: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            color: #dc3545;
+            transition: background-color 0.2s;
+        }
+
+        .del-btn:hover {
+            background-color: #f8d7da;
+        }
+
+        .del-btn:disabled {
+            background: none;
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         /* ── 비밀번호 모달 ── */
         .modal-overlay {
             display: none;
@@ -313,7 +338,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwA733Y1Bq0YYdRZhZKREz766NR2uwEiV_KhsPjg4yq2H7W6HyJuaDh1Ecir0NFTCYbpg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyZsEEG0T4RR5T3UrnMD-KuBkpKjlxtv62Fgl0JNhvNZFemObCex1EKLzX2auVB9yoebg/exec";
 
         const form = document.getElementById('qaForm');
         const questionList = document.getElementById('questionList');
@@ -533,6 +558,7 @@
 
                 const stableIndex = indexMap.get(q);
                 const uniqueId = 'chk_' + stableIndex + '_' + q.date.replace(/[^0-9]/g, '');
+                const delId = 'del_' + stableIndex + '_' + q.date.replace(/[^0-9]/g, '');
 
                 card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
@@ -541,6 +567,7 @@
                     <label class="chk-label" style="font-size: 11px; margin: 0;" for="${uniqueId}">
                         <input type="checkbox" id="${uniqueId}" ${isChecked ? 'checked' : ''}> 답변완료
                     </label>
+                    <button type="button" class="del-btn" id="${delId}" title="이 질문 삭제">🗑️</button>
                 </div>
             </div>
             <p class="content" style="margin: 0;">${escapeHtml(q.content)}</p>
@@ -582,6 +609,44 @@
                         pendingToggles.set(q.date, this.checked);
                     } finally {
                         this.disabled = false;
+                    }
+                });
+
+                // ── 개별 질문 삭제 ──
+                const delBtn = card.querySelector('#' + delId);
+                delBtn.addEventListener('click', async function () {
+                    if (!confirm("이 질문을 삭제하시겠습니까?\n\n" + q.content)) return;
+
+                    delBtn.disabled = true;
+                    checkbox.disabled = true;
+
+                    try {
+                        const res = await fetch(API_URL, {
+                            method: 'POST',
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            redirect: "follow",
+                            body: JSON.stringify({
+                                type: "deleteOne",
+                                adminKey: adminKey,
+                                date: q.date
+                            })
+                        });
+                        const result = await res.json();
+                        if (result.result === "success") {
+                            // 로컬 데이터/캐시/보류 목록에서 제거 후 화면에서 카드 삭제
+                            const idx = allQuestions.indexOf(q);
+                            if (idx > -1) allQuestions.splice(idx, 1);
+                            pendingToggles.delete(q.date);
+                            lastDataString = JSON.stringify(allQuestions);
+                            card.remove();
+                            if (!questionList.children.length) renderFilteredQuestions(); // 빈 목록 안내문 표시
+                        } else {
+                            throw new Error(result.message || "삭제 실패");
+                        }
+                    } catch (err) {
+                        alert("삭제 중 오류가 발생했습니다: " + err.message);
+                        delBtn.disabled = false;
+                        checkbox.disabled = false;
                     }
                 });
 
