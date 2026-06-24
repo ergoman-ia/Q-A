@@ -391,6 +391,64 @@
             color: var(--ink-faint);
         }
 
+        /* ── 페이지네이션 ───────────────────────────────────── */
+        .pager {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line-soft);
+        }
+
+        .pager button {
+            min-width: 34px;
+            height: 34px;
+            padding: 0 9px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--ink-soft);
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .pager button:hover:not(:disabled):not(.is-current) {
+            background: var(--petrol-tint);
+            border-color: #cfe0e3;
+            color: var(--petrol-deep);
+        }
+
+        .pager button.is-current {
+            background: var(--petrol);
+            border-color: var(--petrol);
+            color: #fff;
+            font-weight: 600;
+            cursor: default;
+        }
+
+        .pager button.nav {
+            font-size: 17px;
+            line-height: 1;
+            color: var(--petrol-deep);
+        }
+
+        .pager button:disabled {
+            opacity: .38;
+            cursor: not-allowed;
+        }
+
+        .pager .gap {
+            color: var(--ink-faint);
+            padding: 0 2px;
+            user-select: none;
+            letter-spacing: 1px;
+        }
+
         /* ── 질문 레코드 카드 ───────────────────────────────── */
         #questionList {
             display: flex;
@@ -808,6 +866,9 @@
         const pendingToggles = new Map();   // key: q.date, value: 원하는 체크 상태(boolean)
         let pollTimer = null;
 
+        const PAGE_SIZE = 10;               // 한 페이지에 보일 질문 수
+        let currentPage = 1;                // 1 = 가장 최신 묶음
+
         const isMobile = () => window.matchMedia(MOBILE_QUERY).matches;
 
         /* =====================================================================
@@ -953,6 +1014,7 @@
         function enterAdmin() {
             userMode.style.display = "none";
             adminMode.style.display = "block";
+            currentPage = 1;
             fetchQuestions();
             startPolling();
         }
@@ -1047,9 +1109,18 @@
                 return;
             }
 
+            // ── 페이지네이션 계산 (최신순 기준) ──
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            const startK = (currentPage - 1) * PAGE_SIZE;          // 최신순 0-based 시작
+            const endK = Math.min(startK + PAGE_SIZE, filtered.length);
+
             const frag = document.createDocumentFragment();
 
-            for (let i = filtered.length - 1; i >= 0; i--) {   // 최신순(역순)
+            // 최신순 k번째 → filtered[filtered.length - 1 - k]
+            for (let k = startK; k < endK; k++) {
+                const i = filtered.length - 1 - k;
                 const q = filtered[i];
 
                 let isChecked = toBool(q.isAnswered);
@@ -1131,9 +1202,7 @@
                             if (idx > -1) allQuestions.splice(idx, 1);
                             pendingToggles.delete(q.date);
                             lastDataString = JSON.stringify(allQuestions);
-                            card.remove();
-                            if (!questionList.children.length) renderFilteredQuestions();
-                            else refreshCount();
+                            renderFilteredQuestions();   // 페이지 재계산(현재 페이지 유지·보정)
                         } else {
                             throw new Error(result.message || "삭제 실패");
                         }
@@ -1147,7 +1216,75 @@
                 frag.appendChild(card);
             }
 
+            // ── 페이지 버튼 (2페이지 이상일 때만) ──
+            if (totalPages > 1) frag.appendChild(buildPager(totalPages));
+
             questionList.replaceChildren(frag);   // 1회 교체로 reflow 최소화
+        }
+
+        /* =====================================================================
+           페이지 버튼 생성
+           ‹ = 가장 최신(1페이지) · › = 가장 옛날(마지막 페이지)
+           현재±1 윈도우 + 마지막 페이지 항상 표시, 사이는 … 으로 생략
+           ===================================================================== */
+        function buildPager(totalPages) {
+            const pager = document.createElement("div");
+            pager.className = "pager";
+
+            const go = (p) => {
+                if (p < 1 || p > totalPages || p === currentPage) return;
+                currentPage = p;
+                renderFilteredQuestions();
+                questionList.scrollIntoView({ behavior: "smooth", block: "start" });
+            };
+
+            const mkNav = (label, target, title, disabled) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "nav";
+                b.textContent = label;
+                b.title = title;
+                b.disabled = disabled;
+                b.addEventListener("click", () => go(target));
+                return b;
+            };
+
+            const mkNum = (n) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.textContent = n;
+                if (n === currentPage) b.className = "is-current";
+                else b.addEventListener("click", () => go(n));
+                return b;
+            };
+
+            const mkGap = () => {
+                const s = document.createElement("span");
+                s.className = "gap";
+                s.textContent = "…";
+                return s;
+            };
+
+            // ‹ 가장 최신
+            pager.appendChild(mkNav("‹", 1, "가장 최신", currentPage === 1));
+
+            // 3칸 윈도우 (양 끝에서는 안쪽으로 밀어 항상 3개 유지)
+            let lo = currentPage - 1;
+            let hi = currentPage + 1;
+            if (lo < 1) { lo = 1; hi = Math.min(totalPages, 3); }
+            if (hi > totalPages) { hi = totalPages; lo = Math.max(1, totalPages - 2); }
+
+            if (lo > 1) pager.appendChild(mkGap());            // 앞쪽 생략
+            for (let p = lo; p <= hi; p++) pager.appendChild(mkNum(p));
+            if (hi < totalPages) {                              // 마지막 페이지 항상
+                if (hi < totalPages - 1) pager.appendChild(mkGap());
+                pager.appendChild(mkNum(totalPages));
+            }
+
+            // › 가장 옛날
+            pager.appendChild(mkNav("›", totalPages, "가장 옛날", currentPage === totalPages));
+
+            return pager;
         }
 
         // 카운트 배지만 가볍게 갱신
@@ -1197,7 +1334,7 @@
         });
 
         /* ── 필터/최신화 ─────────────────────────────────────── */
-        dateFilter.addEventListener("change", renderFilteredQuestions);
+        dateFilter.addEventListener("change", () => { currentPage = 1; renderFilteredQuestions(); });
         refreshDataBtn.addEventListener("click", () => fetchQuestions(false));
 
         /* ── 백그라운드 폴링(관리자 모드에서만) ─────────────── */
