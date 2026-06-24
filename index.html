@@ -110,6 +110,7 @@
             letter-spacing: -.02em;
             line-height: 1.28;
             color: var(--ink);
+            text-align:center;
         }
 
         /* ── 카드(패널) 공통 ────────────────────────────────── */
@@ -696,7 +697,7 @@
             <div class="panel submit-panel">
                 <p class="lead">
                     근골격계부담작업 유해요인조사에 관해 궁금한 점이 있으면 자유롭게 질문해 주세요.
-                    모든 접수는 <span class="anon">익명</span>으로 처리됩니다.
+                    모든 내용은 <span class="anon">익명</span>으로 처리됩니다.
                 </p>
 
                 <form id="qaForm">
@@ -705,7 +706,7 @@
                         <span class="count" id="charCount">0자</span>
                     </div>
                     <textarea id="questionContent"
-                        placeholder="예) 특정 공정에서 손목 통증이 잦은데 조사 항목에 반영되나요?" required></textarea>
+                        placeholder="질문할 내용을 입력하세요." required></textarea>
 
                     <button type="submit" class="btn btn-primary" id="submitBtn">질문하기</button>
                     <div class="status" id="submitStatus"></div>
@@ -750,7 +751,7 @@
     <div class="overlay" id="pwdModal">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pwdTitle">
             <h2 id="pwdTitle">관리자 로그인</h2>
-            <p>접수된 질문을 확인하려면 비밀번호를 입력하세요.</p>
+            <p>등록된 질문을 확인하려면 비밀번호를 입력하세요.</p>
             <div class="pwd-wrap">
                 <input type="password" id="pwdInput" placeholder="비밀번호" autocomplete="off"
                     inputmode="text" />
@@ -870,7 +871,7 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = "접수 중…";
+            submitBtn.textContent = "등록 중…";
             clearStatus();
 
             const date = new Date().toLocaleString("ko-KR");
@@ -880,13 +881,13 @@
                 if (result.result === "success") {
                     form.reset();
                     charCount.textContent = "0자";
-                    showStatus("질문이 접수되었습니다. 감사합니다.", "success");
+                    showStatus("질문이 등록되었습니다. 감사합니다.", "success");
                     setTimeout(clearStatus, 3000);
                 } else {
                     throw new Error(result.message || "알 수 없는 오류가 발생했습니다.");
                 }
             } catch (err) {
-                showStatus("접수 실패 · " + err.message, "error");
+                showStatus("등록 실패 · " + err.message, "error");
                 console.error(err);
             } finally {
                 submitBtn.disabled = false;
@@ -1041,7 +1042,7 @@
             if (!filtered.length) {
                 questionList.innerHTML =
                     '<div class="state-note">' +
-                    (filterDate ? "해당 날짜에 접수된 질문이 없습니다." : "아직 접수된 질문이 없습니다.") +
+                    (filterDate ? "해당 날짜에 등록된 질문이 없습니다." : "아직 등록된 질문이 없습니다.") +
                     "</div>";
                 return;
             }
@@ -1170,7 +1171,7 @@
            POST { type:"deleteAll", adminKey }
            ===================================================================== */
         deleteAllBtn.addEventListener("click", async function () {
-            if (!confirm("경고: 접수된 모든 질문이 구글 시트에서 삭제됩니다. 계속할까요?")) return;
+            if (!confirm("경고: 등록된 모든 질문이 구글 시트에서 삭제됩니다. 계속할까요?")) return;
 
             const original = this.textContent;
             this.textContent = "삭제 중…";
