@@ -1370,13 +1370,11 @@
             flashNewest = true;
             await fetchQuestions(false);
 
-            // 폰트(Pretendard) 적용·리렌더가 끝난 뒤에 스크롤해야 위치가 어긋나지 않음.
-            // scrollIntoView(요소 기준)는 진행 중 높이 변동에 흔들리므로, 고정 좌표로 이동.
-            try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
-            requestAnimationFrame(() => {
-                const top = questionList.getBoundingClientRect().top + window.scrollY - 12;
-                window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-            });
+            // 사용자는 '제목(페이지 맨 윗부분)이 보이는 상태'를 최상단으로 인식한다.
+            // 카드를 화면 꼭대기에 맞추면 제목이 잘려 오히려 중간처럼 느껴지므로,
+            // 페이지 맨 위(0)로 올린다 → 제목 → 도구막대 → 강조된 최신 질문이 자연스레 보인다.
+            // 목표가 항상 0이라 리렌더·폰트 변동에도 위치가 어긋나지 않는다.
+            window.scrollTo({ top: 0, behavior: "smooth" });
         });
 
         /* ── 백그라운드 폴링(관리자 모드에서만) ─────────────── */
