@@ -768,7 +768,7 @@
 
                     <button type="submit" class="btn btn-primary" id="submitBtn">질문하기</button>
                     <div class="status" id="submitStatus"></div>
-                </form>    
+                </form>
 
                 <div class="reassure">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -778,7 +778,6 @@
                     </svg>
                     <span>본 도구는 <b>안전보건교육원 근골격계부담작업 유해요인조사 작성실무 과정</b> 전용으로 운영됩니다.</span>
                 </div>
-
             </div>
 
             <div class="admin-entry">
@@ -1336,7 +1335,11 @@
 
         /* ── 필터/최신화 ─────────────────────────────────────── */
         dateFilter.addEventListener("change", () => { currentPage = 1; renderFilteredQuestions(); });
-        refreshDataBtn.addEventListener("click", () => fetchQuestions(false));
+        refreshDataBtn.addEventListener("click", async () => {
+            currentPage = 1;                 // 최신화 = 가장 최근 질문이 있는 1페이지로 이동
+            await fetchQuestions(false);
+            questionList.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
 
         /* ── 백그라운드 폴링(관리자 모드에서만) ─────────────── */
         function startPolling() {
