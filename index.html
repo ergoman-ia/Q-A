@@ -473,6 +473,25 @@
             }
         }
 
+        /* 최신화로 끌어온 '방금 들어온' 질문을 잠깐 강조 — 어느 게 새 질문인지 눈에 띄게 */
+        .record.flash {
+            animation: pop .22s ease both, flash 2.2s ease-out .15s both;
+        }
+
+        @keyframes flash {
+            0% {
+                background: var(--amber);
+                box-shadow: 0 0 0 3px rgba(224, 122, 47, .25);
+            }
+            18% {
+                background: #fdf0e4;
+            }
+            100% {
+                background: var(--surface);
+                box-shadow: 0 0 0 0 rgba(224, 122, 47, 0);
+            }
+        }
+
         /* 답변완료 → 카드 전체를 흐리게(비활성화처럼). 마우스를 올리면 또렷해져 해제/삭제 가능 */
         .record.answered {
             border-left-color: var(--line);
@@ -868,6 +887,7 @@
 
         const PAGE_SIZE = 10;               // 한 페이지에 보일 질문 수
         let currentPage = 1;                // 1 = 가장 최신 묶음
+        let flashNewest = false;            // 최신화 시 1회만 새 질문 카드 강조
 
         const isMobile = () => window.matchMedia(MOBILE_QUERY).matches;
 
@@ -1132,6 +1152,11 @@
 
                 const card = document.createElement("div");
                 card.className = isChecked ? "record answered" : "record";
+                // 최신화로 막 끌어온 경우, 가장 최신(k===0) 카드만 1회 강조
+                if (flashNewest && k === 0) {
+                    card.classList.add("flash");
+                    flashNewest = false;
+                }
                 card.innerHTML =
                     '<div class="rec-head">' +
                         '<span class="rec-time">' + escapeHtml(q.date) + '</span>' +
@@ -1336,7 +1361,13 @@
         /* ── 필터/최신화 ─────────────────────────────────────── */
         dateFilter.addEventListener("change", () => { currentPage = 1; renderFilteredQuestions(); });
         refreshDataBtn.addEventListener("click", async () => {
-            currentPage = 1;                 // 최신화 = 가장 최근 질문이 있는 1페이지로 이동
+            // 관리자가 최신화를 누르는 이유 = '방금 들어온 질문을 지금 확인하고 싶다'.
+            // 그래서 (1) 예전 날짜 필터가 새 질문을 가리지 않도록 필터를 풀고,
+            //        (2) 가장 최신인 1쪽으로 이동하고,
+            //        (3) 그 새 질문 카드를 잠깐 강조한다.
+            dateFilter.value = "";
+            currentPage = 1;
+            flashNewest = true;
             await fetchQuestions(false);
 
             // 폰트(Pretendard) 적용·리렌더가 끝난 뒤에 스크롤해야 위치가 어긋나지 않음.
