@@ -1338,7 +1338,14 @@
         refreshDataBtn.addEventListener("click", async () => {
             currentPage = 1;                 // 최신화 = 가장 최근 질문이 있는 1페이지로 이동
             await fetchQuestions(false);
-            questionList.scrollIntoView({ behavior: "smooth", block: "start" });
+
+            // 폰트(Pretendard) 적용·리렌더가 끝난 뒤에 스크롤해야 위치가 어긋나지 않음.
+            // scrollIntoView(요소 기준)는 진행 중 높이 변동에 흔들리므로, 고정 좌표로 이동.
+            try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
+            requestAnimationFrame(() => {
+                const top = questionList.getBoundingClientRect().top + window.scrollY - 12;
+                window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+            });
         });
 
         /* ── 백그라운드 폴링(관리자 모드에서만) ─────────────── */
