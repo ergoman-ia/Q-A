@@ -29,6 +29,7 @@
 
             --amber: #e07a2f;
             --amber-deep: #c4641e;
+            --amber-soft: #f2b877;
 
             --mist: #eaeeef;
             --surface: #ffffff;
@@ -345,22 +346,6 @@
             color: var(--ink-soft);
         }
 
-        .toolbar input[type="date"] {
-            font-family: var(--mono);
-            font-size: 13px;
-            padding: 7px 9px;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            color: var(--ink);
-            background: #fcfdfd;
-        }
-
-        .toolbar input[type="date"]:focus {
-            outline: none;
-            border-color: var(--petrol);
-            box-shadow: 0 0 0 3px rgba(14, 91, 107, .12);
-        }
-
         .toolbar input[type="text"] {
             flex: 1 1 120px;
             min-width: 90px;
@@ -475,9 +460,9 @@
 
         .public-head {
             display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 10px;
             margin-bottom: 14px;
         }
 
@@ -486,12 +471,45 @@
             font-weight: 800;
             letter-spacing: -.01em;
             color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .public-search {
+            display: flex;
+            gap: 6px;
+            flex: 1 1 150px;
+            min-width: 0;
+        }
+
+        .public-search input {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-family: var(--sans);
+            font-size: 13px;
+            padding: 7px 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: var(--ink);
+            background: #fcfdfd;
+        }
+
+        .public-search input:focus {
+            outline: none;
+            border-color: var(--petrol);
+            box-shadow: 0 0 0 3px rgba(14, 91, 107, .12);
+        }
+
+        .public-search .btn-tool {
+            flex: 0 0 auto;
+            padding: 7px 12px;
+            font-size: 13px;
         }
 
         .public-head .public-count {
             font-family: var(--mono);
             font-size: 12px;
             color: var(--ink-faint);
+            flex: 0 0 auto;
         }
 
         #publicList {
@@ -504,7 +522,7 @@
             position: relative;
             background: var(--surface);
             border: 1px solid var(--line);
-            border-left: 4px solid var(--petrol);
+            border-left: 4px solid var(--amber-soft);   /* 미답변: 옅은 주황 */
             border-radius: var(--radius-sm);
             padding: 12px 38px 12px 15px;   /* 오른쪽은 캐럿 자리 */
             cursor: pointer;
@@ -518,7 +536,7 @@
         }
 
         .p-record.is-answered {
-            border-left-color: var(--ok);
+            border-left-color: var(--ok);   /* 답변완료: 초록 */
         }
 
         /* 펼침/접힘 표시 캐럿(오른쪽 위) */
@@ -599,7 +617,7 @@
             position: relative;
             background: var(--surface);
             border: 1px solid var(--line);
-            border-left: 4px solid var(--amber);
+            border-left: 4px solid var(--amber-soft);   /* 미답변: 옅은 주황 */
             border-radius: var(--radius-sm);
             padding: 14px 16px;
             animation: pop .22s ease both;
@@ -898,6 +916,10 @@
             <section class="panel public-panel">
                 <div class="public-head">
                     <span class="title">등록된 질문</span>
+                    <div class="public-search">
+                        <input type="text" id="publicSearchInput" placeholder="키워드 검색" autocomplete="off" />
+                        <button id="publicSearchBtn" type="button" class="btn btn-tool">검색</button>
+                    </div>
                     <span class="public-count" id="publicCount"></span>
                 </div>
                 <div id="publicList"></div>
@@ -944,8 +966,6 @@
             </div>
 
             <div class="toolbar">
-                <label for="dateFilter">날짜</label>
-                <input type="date" id="dateFilter" />
                 <button id="refreshDataBtn" type="button" class="btn btn-tool">최신화</button>
                 <input type="text" id="searchKeyword" placeholder="키워드 검색" autocomplete="off" />
                 <button id="searchBtn" type="button" class="btn btn-tool">검색하기</button>
@@ -1000,7 +1020,6 @@
         const goToAdminBtn = $("goToAdminBtn");
         const goToUserBtn = $("goToUserBtn");
         const questionList = $("questionList");
-        const dateFilter = $("dateFilter");
         const refreshDataBtn = $("refreshDataBtn");
         const searchKeyword = $("searchKeyword");
         const searchBtn = $("searchBtn");
@@ -1009,6 +1028,8 @@
 
         const publicList = $("publicList");
         const publicCount = $("publicCount");
+        const publicSearchInput = $("publicSearchInput");
+        const publicSearchBtn = $("publicSearchBtn");
 
         const pwdModal = $("pwdModal");
         const pwdInput = $("pwdInput");
@@ -1073,19 +1094,35 @@
         }
 
         /* =====================================================================
-           [공개] 모든 접속자 — 질문 목록 (읽기 전용 · 아코디언)
+           [공개] 모든 접속자 — 질문 목록 (읽기 전용 · 아코디언 + 페이지네이션 + 검색)
            GET ?public=1&t=...  →  [{ date, content, isAnswered }]
            ★ 관리자 키를 전혀 사용하지 않음 → 삭제/수정 권한은 노출되지 않음
            · 기본은 한 줄(내용 …으로 축약)만 노출
            · 클릭하면 전체 확장(한 번에 하나만 — 다른 걸 누르면 이전 건 접힘)
            · 확장 후 아무 조작 없이 30초가 지나면 자동으로 다시 접힘
+           · 5개씩 페이지네이션(하단), '등록된 질문' 옆에서 키워드 검색
+           · 새 질문이 다른 기기에도 빠르게 보이도록 짧은 주기로 자동 새로고침
            ===================================================================== */
+        const PUBLIC_PAGE_SIZE = 5;              // 한 페이지 5개
+        const PUBLIC_POLL_MS = 7000;             // 공개 목록 자동 새로고침 주기(빠른 반영)
         const PUBLIC_AUTO_COLLAPSE_MS = 30000;   // 30초 후 자동 복구
+
         let publicQuestions = [];
+        let publicSearch = "";                   // 검색 클릭 시 적용되는 키워드
+        let publicPage = 1;
+        let publicLastData = "";                 // 변경 감지(불필요한 리렌더 방지)
         let publicOpenEl = null;                 // 현재 확장된 카드
         let publicCollapseTimer = null;          // 30초 타이머
+        let publicPollTimer = null;              // 자동 새로고침 타이머
+        let publicPendingRender = false;         // 확장 중 들어온 갱신 보류
 
-        async function fetchPublicQuestions(showSpinner) {
+        function publicFiltered() {
+            const kw = publicSearch.trim().toLowerCase();
+            if (!kw) return publicQuestions;
+            return publicQuestions.filter(q => String(q.content).toLowerCase().includes(kw));
+        }
+
+        async function fetchPublicQuestions(showSpinner, isBackground) {
             if (showSpinner) {
                 publicList.innerHTML =
                     '<div class="state-note"><span class="spin"></span>질문을 불러오는 중…</div>';
@@ -1098,57 +1135,90 @@
                 if (!res.ok) throw new Error("서버 오류: " + res.status);
                 const data = await res.json();
                 if (data && data.error) throw new Error(String(data.error));
-                publicQuestions = Array.isArray(data) ? data : [];
+
+                const arr = Array.isArray(data) ? data : [];
+                const str = JSON.stringify(arr);
+
+                // 백그라운드 갱신인데 변경이 없으면 화면을 건드리지 않음(확장·스크롤 유지)
+                if (isBackground && str === publicLastData) return;
+
+                publicQuestions = arr;
+                publicLastData = str;
+
+                // 사용자가 카드를 펼쳐 읽는 중이면 리렌더를 미룸(방해 방지)
+                if (isBackground && publicOpenEl) {
+                    publicPendingRender = true;
+                    return;
+                }
                 renderPublicList();
             } catch (err) {
                 console.error("[public]", err);
-                publicList.innerHTML =
-                    '<div class="state-note">등록된 질문이 없거나, 목록을 불러오지 못했습니다.</div>';
-                publicCount.textContent = "";
+                if (!isBackground) {
+                    publicList.innerHTML =
+                        '<div class="state-note">등록된 질문이 없거나, 목록을 불러오지 못했습니다.</div>';
+                    publicCount.textContent = "";
+                }
             }
         }
 
-        // 30초 타이머 정리
         function clearPublicTimer() {
             if (publicCollapseTimer) { clearTimeout(publicCollapseTimer); publicCollapseTimer = null; }
         }
 
-        // 카드 접기
+        // 카드가 모두 접혀 유휴 상태가 되면, 보류된 갱신을 반영
+        function applyPendingIfIdle() {
+            if (publicPendingRender && !publicOpenEl) {
+                publicPendingRender = false;
+                renderPublicList();
+            }
+        }
+
         function collapsePublicCard(el) {
             if (!el) return;
             el.classList.remove("expanded");
             if (publicOpenEl === el) publicOpenEl = null;
         }
 
-        // 카드 펼치기(하나만) + 30초 자동 복구 예약
         function expandPublicCard(el) {
             if (publicOpenEl && publicOpenEl !== el) collapsePublicCard(publicOpenEl);
             el.classList.add("expanded");
             publicOpenEl = el;
             clearPublicTimer();
             publicCollapseTimer = setTimeout(() => {
-                collapsePublicCard(el);
                 publicCollapseTimer = null;
+                collapsePublicCard(el);
+                applyPendingIfIdle();
             }, PUBLIC_AUTO_COLLAPSE_MS);
         }
 
         function renderPublicList() {
-            // 재렌더 시 확장 상태·타이머 초기화(그전 DOM은 사라짐)
             clearPublicTimer();
             publicOpenEl = null;
+            publicPendingRender = false;
 
-            const total = publicQuestions.length;
+            const filtered = publicFiltered();
+            const total = filtered.length;
             publicCount.textContent = total ? total + "건" : "";
 
             if (!total) {
                 publicList.innerHTML =
-                    '<div class="state-note">아직 등록된 질문이 없습니다. 첫 질문을 남겨보세요.</div>';
+                    '<div class="state-note">' +
+                    (publicSearch.trim()
+                        ? `‘${escapeHtml(publicSearch.trim())}’ 검색 결과가 없습니다.`
+                        : "아직 등록된 질문이 없습니다. 첫 질문을 남겨보세요.") +
+                    "</div>";
                 return;
             }
 
+            const totalPages = Math.ceil(total / PUBLIC_PAGE_SIZE);
+            if (publicPage > totalPages) publicPage = totalPages;
+            if (publicPage < 1) publicPage = 1;
+            const startK = (publicPage - 1) * PUBLIC_PAGE_SIZE;
+            const endK = Math.min(startK + PUBLIC_PAGE_SIZE, total);
+
             const frag = document.createDocumentFragment();
-            for (let k = 0; k < total; k++) {
-                const q = publicQuestions[total - 1 - k];             // 최신순
+            for (let k = startK; k < endK; k++) {
+                const q = filtered[total - 1 - k];               // 최신순
                 const answered = toBool(q.isAnswered);
 
                 const card = document.createElement("div");
@@ -1162,20 +1232,95 @@
                     '<p class="p-rec-body">' + escapeHtml(q.content) + '</p>';
                 frag.appendChild(card);
             }
+
+            // 네비게이션은 목록 '아래쪽'에 배치
+            if (totalPages > 1) frag.appendChild(buildPublicPager(totalPages));
             publicList.replaceChildren(frag);
+        }
+
+        function buildPublicPager(totalPages) {
+            const pager = document.createElement("div");
+            pager.className = "pager";
+            const go = (p) => {
+                if (p < 1 || p > totalPages || p === publicPage) return;
+                publicPage = p;
+                renderPublicList();
+                publicList.scrollIntoView({ behavior: "smooth", block: "start" });
+            };
+            const mkNav = (label, target, title, disabled) => {
+                const b = document.createElement("button");
+                b.type = "button"; b.className = "nav";
+                b.textContent = label; b.title = title; b.disabled = disabled;
+                b.addEventListener("click", () => go(target));
+                return b;
+            };
+            const mkNum = (n) => {
+                const b = document.createElement("button");
+                b.type = "button"; b.textContent = n;
+                if (n === publicPage) b.className = "is-current";
+                else b.addEventListener("click", () => go(n));
+                return b;
+            };
+            const mkGap = () => {
+                const s = document.createElement("span");
+                s.className = "gap"; s.textContent = "…";
+                return s;
+            };
+            pager.appendChild(mkNav("‹", 1, "가장 최신", publicPage === 1));
+            let lo = publicPage - 1, hi = publicPage + 1;
+            if (lo < 1) { lo = 1; hi = Math.min(totalPages, 3); }
+            if (hi > totalPages) { hi = totalPages; lo = Math.max(1, totalPages - 2); }
+            if (lo > 1) pager.appendChild(mkGap());
+            for (let p = lo; p <= hi; p++) pager.appendChild(mkNum(p));
+            if (hi < totalPages) {
+                if (hi < totalPages - 1) pager.appendChild(mkGap());
+                pager.appendChild(mkNum(totalPages));
+            }
+            pager.appendChild(mkNav("›", totalPages, "가장 옛날", publicPage === totalPages));
+            return pager;
         }
 
         // 클릭(이벤트 위임): 같은 카드 → 접기 / 다른 카드 → 이전 접고 확장
         publicList.addEventListener("click", (e) => {
+            if (e.target.closest(".pager")) return;   // 페이지 버튼은 제외
             const card = e.target.closest(".p-record");
             if (!card) return;
             if (card === publicOpenEl) {
                 clearPublicTimer();
                 collapsePublicCard(card);
+                applyPendingIfIdle();
             } else {
                 expandPublicCard(card);
             }
         });
+
+        // 검색: '등록된 질문' 옆 입력창 + 검색 버튼
+        function runPublicSearch() {
+            publicSearch = publicSearchInput.value.trim();
+            publicPage = 1;
+            renderPublicList();
+        }
+        publicSearchBtn.addEventListener("click", runPublicSearch);
+        publicSearchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") runPublicSearch(); });
+        // 입력창을 비우면 자동으로 전체 복귀
+        publicSearchInput.addEventListener("input", () => {
+            if (publicSearchInput.value.trim() === "" && publicSearch !== "") {
+                publicSearch = ""; publicPage = 1; renderPublicList();
+            }
+        });
+
+        // 자동 새로고침(공개 화면이 보일 때만)
+        function startPublicPolling() {
+            stopPublicPolling();
+            publicPollTimer = setInterval(() => {
+                if (adminMode.style.display !== "block" && !document.hidden) {
+                    fetchPublicQuestions(false, true);
+                }
+            }, PUBLIC_POLL_MS);
+        }
+        function stopPublicPolling() {
+            if (publicPollTimer) { clearInterval(publicPollTimer); publicPollTimer = null; }
+        }
 
         /* =====================================================================
            [흐름 1] 사용자 — 질문 제출
@@ -1208,7 +1353,10 @@
                     showStatus("질문이 등록되었습니다. 감사합니다.", "success");
                     setTimeout(clearStatus, 3000);
                     // 방금 등록한 질문이 목록 맨 위에 바로 보이도록 새로고침
-                    fetchPublicQuestions(false);
+                    publicSearch = "";
+                    if (publicSearchInput) publicSearchInput.value = "";
+                    publicPage = 1;
+                    fetchPublicQuestions(false, false);
                 } else {
                     throw new Error(result.message || "알 수 없는 오류가 발생했습니다.");
                 }
@@ -1279,6 +1427,7 @@
         function enterAdmin() {
             userMode.style.display = "none";
             adminMode.style.display = "block";
+            stopPublicPolling();
             activeSearch = "";
             if (searchKeyword) searchKeyword.value = "";
             fetchQuestions();
@@ -1293,10 +1442,12 @@
             lastDataString = "";
             allQuestions = [];
             pendingToggles.clear();
-            dateFilter.value = "";
             questionList.innerHTML = "";
-            // 관리자가 삭제/변경했을 수 있으므로 공개 목록도 최신화
-            fetchPublicQuestions(false);
+            // 관리자가 삭제/변경했을 수 있으므로 공개 목록도 최신화 + 폴링 재개
+            publicPage = 1;
+            publicLastData = "";
+            fetchPublicQuestions(false, false);
+            startPublicPolling();
         }
 
         goToUserBtn.addEventListener("click", exitAdmin);
@@ -1344,10 +1495,9 @@
 
         /* =====================================================================
            [흐름 4] 관리자 — 날짜/키워드 필터 + 렌더 (최신순, 전체 표시)
-           날짜 매칭 형식: `${y}. ${parseInt(m)}. ${parseInt(d)}.`  (원본 동일)
+           키워드 검색만 지원(날짜 필터 제거)
            ===================================================================== */
         function renderFilteredQuestions() {
-            const filterDate = dateFilter.value;
             const kw = activeSearch.trim().toLowerCase();
 
             // q → 원본 인덱스 1회 매핑 (반복 indexOf 제거)
@@ -1355,11 +1505,6 @@
             allQuestions.forEach((q, i) => indexMap.set(q, i));
 
             let filtered = allQuestions;
-            if (filterDate) {
-                const [y, m, d] = filterDate.split("-");
-                const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`;
-                filtered = filtered.filter(q => q.date.includes(searchStr));
-            }
             if (kw) {
                 filtered = filtered.filter(q => String(q.content).toLowerCase().includes(kw));
             }
@@ -1374,10 +1519,9 @@
                 : "";
 
             if (!filtered.length) {
-                let msg;
-                if (kw) msg = `‘${escapeHtml(activeSearch.trim())}’ 검색 결과가 없습니다.`;
-                else if (filterDate) msg = "해당 날짜에 등록된 질문이 없습니다.";
-                else msg = "아직 등록된 질문이 없습니다.";
+                const msg = kw
+                    ? `‘${escapeHtml(activeSearch.trim())}’ 검색 결과가 없습니다.`
+                    : "아직 등록된 질문이 없습니다.";
                 questionList.innerHTML = '<div class="state-note">' + msg + "</div>";
                 return;
             }
@@ -1493,12 +1637,10 @@
 
         // 카운트 배지만 가볍게 갱신
         function refreshCount() {
-            const filterDate = dateFilter.value;
+            const kw = activeSearch.trim().toLowerCase();
             let filtered = allQuestions;
-            if (filterDate) {
-                const [y, m, d] = filterDate.split("-");
-                const searchStr = `${y}. ${parseInt(m)}. ${parseInt(d)}.`;
-                filtered = allQuestions.filter(q => q.date.includes(searchStr));
+            if (kw) {
+                filtered = allQuestions.filter(q => String(q.content).toLowerCase().includes(kw));
             }
             const answered = filtered.filter(q => {
                 const v = pendingToggles.has(q.date) ? pendingToggles.get(q.date) : toBool(q.isAnswered);
@@ -1537,9 +1679,7 @@
             }
         });
 
-        /* ── 필터 / 최신화 / 검색 ─────────────────────────────── */
-        dateFilter.addEventListener("change", renderFilteredQuestions);
-
+        /* ── 최신화 / 검색 ───────────────────────────────────── */
         // 검색하기: 입력된 키워드가 포함된 질문만 표시
         function runSearch() {
             activeSearch = searchKeyword.value.trim();
@@ -1548,12 +1688,17 @@
         }
         searchBtn.addEventListener("click", runSearch);
         searchKeyword.addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
+        // 입력창을 비우면 자동으로 전체 복귀
+        searchKeyword.addEventListener("input", () => {
+            if (searchKeyword.value.trim() === "" && activeSearch !== "") {
+                activeSearch = ""; renderFilteredQuestions();
+            }
+        });
 
         refreshDataBtn.addEventListener("click", async () => {
             // 최신화 = '방금 들어온 질문을 지금 확인하고 싶다'.
-            // (1) 날짜 필터·검색 키워드를 모두 리셋해 전체가 보이게 하고,
+            // (1) 검색 키워드를 리셋해 전체가 보이게 하고,
             // (2) 가장 최신 질문 카드를 잠깐 강조한다.
-            dateFilter.value = "";
             searchKeyword.value = "";
             activeSearch = "";
             flashNewest = true;
@@ -1578,13 +1723,14 @@
             if (e.matches && adminMode.style.display === "block") exitAdmin();
         });
 
-        /* ── 공개 목록: 최초 로드 시 조회 ─────────────────────── */
-        fetchPublicQuestions(true);
+        /* ── 공개 목록: 최초 로드 시 조회 + 자동 새로고침 시작 ── */
+        fetchPublicQuestions(true, false);
+        startPublicPolling();
 
-        /* ── 탭으로 되돌아오면(사용자 모드일 때) 조용히 최신화 ── */
+        /* ── 탭으로 되돌아오면(사용자 모드일 때) 즉시 최신화 ── */
         document.addEventListener("visibilitychange", () => {
             if (!document.hidden && adminMode.style.display !== "block") {
-                fetchPublicQuestions(false);
+                fetchPublicQuestions(false, true);
             }
         });
     </script>
