@@ -1044,6 +1044,7 @@
         let lastDataString = "";
         const pendingToggles = new Map();   // key: q.date, value: 원하는 체크 상태(boolean)
         let pollTimer = null;
+        let adminFetchInFlight = false;     // 관리자 조회 진행 중 여부(중복 방지)
 
         let activeSearch = "";              // 관리자 키워드 검색어(검색하기 클릭 시 적용)
         let flashNewest = false;            // 최신화 시 1회만 새 질문 카드 강조
@@ -1104,7 +1105,7 @@
            · 새 질문이 다른 기기에도 빠르게 보이도록 짧은 주기로 자동 새로고침
            ===================================================================== */
         const PUBLIC_PAGE_SIZE = 5;              // 한 페이지 5개
-        const PUBLIC_POLL_MS = 7000;             // 공개 목록 자동 새로고침 주기(빠른 반영)
+        const PUBLIC_POLL_MS = 10000;            // 공개 목록 자동 새로고침 주기(응답 후부터 카운트)
         const PUBLIC_AUTO_COLLAPSE_MS = 30000;   // 30초 후 자동 복구
 
         let publicQuestions = [];
@@ -1115,6 +1116,7 @@
         let publicCollapseTimer = null;          // 30초 타이머
         let publicPollTimer = null;              // 자동 새로고침 타이머
         let publicPendingRender = false;         // 확장 중 들어온 갱신 보류
+        let publicFetchInFlight = false;         // 요청 진행 중 여부(중복/누적 방지)
 
         function publicFiltered() {
             const kw = publicSearch.trim().toLowerCase();
@@ -1123,6 +1125,9 @@
         }
 
         async function fetchPublicQuestions(showSpinner, isBackground) {
+            // 폴링이 서버 지연으로 겹쳐 쌓이는 것을 방지: 진행 중이면 백그라운드 폴링은 건너뜀
+            if (isBackground && publicFetchInFlight) return;
+            publicFetchInFlight = true;
             if (showSpinner) {
                 publicList.innerHTML =
                     '<div class="state-note"><span class="spin"></span>질문을 불러오는 중…</div>';
@@ -1158,6 +1163,8 @@
                         '<div class="state-note">등록된 질문이 없거나, 목록을 불러오지 못했습니다.</div>';
                     publicCount.textContent = "";
                 }
+            } finally {
+                publicFetchInFlight = false;
             }
         }
 
@@ -1310,16 +1317,23 @@
         });
 
         // 자동 새로고침(공개 화면이 보일 때만)
-        function startPublicPolling() {
+        // ── setInterval 대신 '응답이 끝난 뒤 다음 폴링을 예약'하는 체이닝 방식.
+        //    서버가 느려도 요청이 겹쳐 쌓이지 않고, 지터로 다수 기기의 동시 요청도 분산.
+        function scheduleNextPublicPoll() {
             stopPublicPolling();
-            publicPollTimer = setInterval(() => {
+            const jitter = Math.floor(Math.random() * 2000);   // 0~2초 분산
+            publicPollTimer = setTimeout(async () => {
                 if (adminMode.style.display !== "block" && !document.hidden) {
-                    fetchPublicQuestions(false, true);
+                    await fetchPublicQuestions(false, true);
                 }
-            }, PUBLIC_POLL_MS);
+                scheduleNextPublicPoll();                       // 이번 요청이 끝난 뒤 다음 예약
+            }, PUBLIC_POLL_MS + jitter);
+        }
+        function startPublicPolling() {
+            scheduleNextPublicPoll();
         }
         function stopPublicPolling() {
-            if (publicPollTimer) { clearInterval(publicPollTimer); publicPollTimer = null; }
+            if (publicPollTimer) { clearTimeout(publicPollTimer); publicPollTimer = null; }
         }
 
         /* =====================================================================
@@ -1457,6 +1471,9 @@
            GET ?adminKey=...&t=...  →  [{ date, content, isAnswered }]
            ===================================================================== */
         async function fetchQuestions(isBackground = false) {
+            // 폴링이 겹쳐 쌓이지 않도록: 진행 중이면 백그라운드 폴링은 건너뜀
+            if (isBackground && adminFetchInFlight) return;
+            adminFetchInFlight = true;
             if (!isBackground) {
                 questionList.innerHTML = '<div class="state-note"><span class="spin"></span>목록을 불러오는 중…</div>';
             }
@@ -1490,6 +1507,8 @@
                         '<div class="state-note error">목록을 불러오지 못했습니다. 최신화를 다시 눌러 주세요.</div>';
                 }
                 console.error(err);
+            } finally {
+                adminFetchInFlight = false;
             }
         }
 
